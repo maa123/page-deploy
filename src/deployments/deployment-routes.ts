@@ -1,14 +1,23 @@
 import type { FastifyInstance } from "fastify";
 
 import type { AppConfig } from "../config.js";
-import { DeploymentRequestError, handleDeployment } from "./deployment-service.js";
+import { DeploymentRequestError } from "./deployment-errors.js";
+import { handleDeployment } from "./deployment-service.js";
+
+function getFastifyErrorCode(error: unknown): string | undefined {
+  if (typeof error === "object" && error !== null && "code" in error) {
+    return (error as { code: string }).code;
+  }
+  return undefined;
+}
 
 function isMultipartLimitError(error: unknown): boolean {
-  if (typeof error !== "object" || error === null || !("code" in error)) {
-    return false;
-  }
-  const code = (error as { code: string }).code;
+  const code = getFastifyErrorCode(error);
   return code === "FST_REQ_FILE_TOO_LARGE" || code === "FST_FILES_LIMIT" || code === "FST_PARTS_LIMIT";
+}
+
+function isInvalidMultipartContentType(error: unknown): boolean {
+  return getFastifyErrorCode(error) === "FST_INVALID_MULTIPART_CONTENT_TYPE";
 }
 
 function multipartLimitMessage(error: unknown): string {
@@ -41,6 +50,13 @@ export async function registerDeploymentRoutes(
             status: "failed",
             projectId: request.params.projectId,
             errorMessage: error.message,
+          });
+        }
+        if (isInvalidMultipartContentType(error)) {
+          return reply.code(415).send({
+            status: "failed",
+            projectId: request.params.projectId,
+            errorMessage: "Content-Type must be multipart/form-data",
           });
         }
         if (isMultipartLimitError(error)) {

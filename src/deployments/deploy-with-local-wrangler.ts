@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 
 import { resolveLocalWranglerBinary } from "../wrangler-bin.js";
 import { redactSecrets } from "./redact-secrets.js";
+import { assertSafeBranch, assertSafeProjectId } from "./safe-arg.js";
 
 export interface DeployWithLocalWranglerInput {
   assetDir: string;
@@ -20,6 +21,9 @@ export interface DeployWithLocalWranglerResult {
 export async function deployWithLocalWrangler(
   input: DeployWithLocalWranglerInput,
 ): Promise<DeployWithLocalWranglerResult> {
+  assertSafeProjectId(input.projectName);
+  assertSafeBranch(input.branch);
+
   const wrangler = resolveLocalWranglerBinary();
 
   return new Promise((resolve, reject) => {
@@ -44,7 +48,7 @@ export async function deployWithLocalWrangler(
           NO_COLOR: "1",
         },
         cwd: input.assetDir,
-        shell: process.platform === "win32",
+        shell: false,
         stdio: ["ignore", "pipe", "pipe"],
         windowsHide: true,
       },

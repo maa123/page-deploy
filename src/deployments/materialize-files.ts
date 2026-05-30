@@ -27,6 +27,33 @@ export interface MaterializeState {
   writtenPaths: Set<string>;
 }
 
+const FILESYSTEM_PATH_COLLISION_CODES = new Set(["ENOTDIR", "EISDIR", "EEXIST"]);
+
+export function assertNoPathHierarchyCollision(
+  writtenPaths: Set<string>,
+  relativePath: string,
+): void {
+  for (const existing of writtenPaths) {
+    if (existing === relativePath) {
+      throw new MaterializeError(`duplicate path: ${relativePath}`);
+    }
+    if (relativePath.startsWith(`${existing}/`) || existing.startsWith(`${relativePath}/`)) {
+      throw new MaterializeError(`conflicting path: ${relativePath}`);
+    }
+  }
+}
+
+function toMaterializeFilesystemError(error: unknown, relativePath: string): MaterializeError | null {
+  const code = (error as NodeJS.ErrnoException).code;
+  if (code && FILESYSTEM_PATH_COLLISION_CODES.has(code)) {
+    if (code === "EEXIST") {
+      return new MaterializeError(`duplicate path: ${relativePath}`);
+    }
+    return new MaterializeError(`conflicting path: ${relativePath}`);
+  }
+  return null;
+}
+
 export function createMaterializeState(): MaterializeState {
   return {
     fileCount: 0,
@@ -59,16 +86,22 @@ export async function materializeFile(input: MaterializeFileInput): Promise<stri
     throw new MaterializeError(`forbidden path: ${relativePath}`);
   }
 
-  if (input.state.writtenPaths.has(relativePath)) {
-    throw new MaterializeError(`duplicate path: ${relativePath}`);
-  }
+  assertNoPathHierarchyCollision(input.state.writtenPaths, relativePath);
 
   if (input.state.fileCount >= input.limits.maxFileCount) {
     throw new MaterializeError(`file count exceeds limit of ${input.limits.maxFileCount}`);
   }
 
   const destPath = path.join(input.rootDir, relativePath);
-  await fs.mkdir(path.dirname(destPath), { recursive: true });
+  try {
+    await fs.mkdir(path.dirname(destPath), { recursive: true });
+  } catch (error) {
+    const mapped = toMaterializeFilesystemError(error, relativePath);
+    if (mapped) {
+      throw mapped;
+    }
+    throw error;
+  }
 
   let fileBytes = 0;
   const counter = new Transform({
@@ -107,9 +140,9 @@ export async function materializeFile(input: MaterializeFileInput): Promise<stri
     if (error instanceof MaterializeError) {
       throw error;
     }
-    const code = (error as NodeJS.ErrnoException).code;
-    if (code === "EEXIST") {
-      throw new MaterializeError(`duplicate path: ${relativePath}`);
+    const mapped = toMaterializeFilesystemError(error, relativePath);
+    if (mapped) {
+      throw mapped;
     }
     throw error;
   }

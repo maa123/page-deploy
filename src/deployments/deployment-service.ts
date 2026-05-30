@@ -11,7 +11,9 @@ import {
   extractPreviewUrl,
   formatWranglerFailure,
 } from "./deploy-with-local-wrangler.js";
+import { DeploymentRequestError } from "./deployment-errors.js";
 import { MaterializeError, createMaterializeState, materializeFile } from "./materialize-files.js";
+import { assertSafeBranch, assertSafeProjectId } from "./safe-arg.js";
 
 export type DeploymentStatus = "success" | "failed";
 
@@ -26,15 +28,7 @@ export interface DeploymentResult {
   errorMessage?: string;
 }
 
-export class DeploymentRequestError extends Error {
-  constructor(
-    message: string,
-    readonly statusCode: number,
-  ) {
-    super(message);
-    this.name = "DeploymentRequestError";
-  }
-}
+export { DeploymentRequestError } from "./deployment-errors.js";
 
 function isMultipartFile(part: unknown): part is MultipartFile {
   return (
@@ -50,6 +44,12 @@ export async function handleDeployment(
   config: AppConfig,
 ): Promise<DeploymentResult> {
   const projectId = request.params.projectId;
+  assertSafeProjectId(projectId);
+
+  if (!request.isMultipart()) {
+    throw new DeploymentRequestError("Content-Type must be multipart/form-data", 415);
+  }
+
   let branch: string | undefined;
   let environment: Environment | undefined;
   const assetDir = await fs.mkdtemp(path.join(os.tmpdir(), `page-deploy-${projectId}-`));
@@ -113,6 +113,9 @@ export async function handleDeployment(
     if (!branch?.trim()) {
       throw new DeploymentRequestError("branch is required", 400);
     }
+    const trimmedBranch = branch.trim();
+    assertSafeBranch(trimmedBranch);
+
     if (!environment) {
       throw new DeploymentRequestError("environment is required", 400);
     }
@@ -123,7 +126,7 @@ export async function handleDeployment(
     const { exitCode, stdout, stderr } = await deployWithLocalWrangler({
       assetDir,
       projectName: projectId,
-      branch: branch.trim(),
+      branch: trimmedBranch,
       accountId: config.cloudflareAccountId,
       apiToken: config.cloudflareApiToken,
     });
@@ -132,7 +135,7 @@ export async function handleDeployment(
       return {
         status: "failed",
         projectId,
-        branch: branch.trim(),
+        branch: trimmedBranch,
         environment,
         errorMessage: formatWranglerFailure(stdout, stderr),
       };
@@ -141,7 +144,7 @@ export async function handleDeployment(
     return {
       status: "success",
       projectId,
-      branch: branch.trim(),
+      branch: trimmedBranch,
       environment,
       previewUrl: extractPreviewUrl(stdout),
       fileCount: state.fileCount,
