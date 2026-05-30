@@ -1,6 +1,6 @@
 import { DeploymentRequestError } from "./deployment-errors.js";
 
-/** Cloudflare Pages project names and branch labels passed to wrangler argv (no shell). */
+/** wrangler の argv に渡す Cloudflare Pages のプロジェクト名とブランチ（シェルは使わない）。 */
 const PROJECT_ID_PATTERN = /^[a-zA-Z0-9](?:[a-zA-Z0-9_-]{0,127})$/;
 const BRANCH_PATTERN = /^[a-zA-Z0-9](?:[a-zA-Z0-9_./-]{0,255})$/;
 

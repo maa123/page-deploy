@@ -12,8 +12,8 @@ async function main(): Promise<void> {
     bodyLimit: config.bodyLimitBytes,
   });
 
-  // Parser limit must exceed the service limit so oversized uploads fail in
-  // materializeFile (400) instead of being truncated and deployed.
+  // パーサ上限はサービス上限より大きくする。サイズ超過が途中で切り捨てられて
+  // デプロイされないよう、materializeFile で 400 にする。
   await app.register(multipart, {
     throwFileSizeLimit: true,
     limits: {
