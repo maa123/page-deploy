@@ -11,7 +11,7 @@
     "test": "node --import tsx --test src/**/*.test.ts"
   },
   "devDependencies": {
-    "@types/node": "^22.15.29",
+    "@types/node": "^25.9.1",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   }
