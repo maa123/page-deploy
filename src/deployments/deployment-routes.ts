@@ -13,7 +13,12 @@ function getFastifyErrorCode(error: unknown): string | undefined {
 
 function isMultipartLimitError(error: unknown): boolean {
   const code = getFastifyErrorCode(error);
-  return code === "FST_REQ_FILE_TOO_LARGE" || code === "FST_FILES_LIMIT" || code === "FST_PARTS_LIMIT";
+  return (
+    code === "FST_REQ_FILE_TOO_LARGE" ||
+    code === "FST_FILES_LIMIT" ||
+    code === "FST_PARTS_LIMIT" ||
+    code === "FST_FIELDS_LIMIT"
+  );
 }
 
 function isInvalidMultipartContentType(error: unknown): boolean {
@@ -26,8 +31,14 @@ function multipartLimitMessage(error: unknown): string {
     if (code === "FST_REQ_FILE_TOO_LARGE") {
       return "file exceeds maximum size";
     }
-    if (code === "FST_FILES_LIMIT" || code === "FST_PARTS_LIMIT") {
+    if (code === "FST_FILES_LIMIT") {
       return "upload exceeds maximum file count";
+    }
+    if (code === "FST_PARTS_LIMIT") {
+      return "upload exceeds maximum part count";
+    }
+    if (code === "FST_FIELDS_LIMIT") {
+      return "upload exceeds maximum field count";
     }
   }
   return "upload limit exceeded";

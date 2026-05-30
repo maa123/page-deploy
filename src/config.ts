@@ -18,8 +18,6 @@ export function parsePositiveInt(name: string, fallback: number): number {
   return Number(trimmed);
 }
 
-export type Environment = "production" | "preview";
-
 export interface AppConfig {
   cloudflareApiToken: string;
   cloudflareAccountId: string;
@@ -28,23 +26,31 @@ export interface AppConfig {
   maxUploadBytes: number;
   maxFileCount: number;
   maxSingleFileBytes: number;
+  maxMultipartFields: number;
+  maxMultipartFieldSize: number;
+  maxMultipartParts: number;
+  bodyLimitBytes: number;
 }
 
 export function loadConfig(): AppConfig {
+  const maxUploadBytes = parsePositiveInt("MAX_UPLOAD_BYTES", 52_428_800);
+  const maxFileCount = parsePositiveInt("MAX_FILE_COUNT", 1000);
+  const maxSingleFileBytes = parsePositiveInt("MAX_SINGLE_FILE_BYTES", 10_485_760);
+  const maxMultipartFields = parsePositiveInt("MAX_MULTIPART_FIELDS", 4);
+  const maxMultipartFieldSize = parsePositiveInt("MAX_MULTIPART_FIELD_SIZE", 256);
+  const maxMultipartParts = maxFileCount + maxMultipartFields + 2;
+
   return {
     cloudflareApiToken: requireEnv("CLOUDFLARE_API_TOKEN"),
     cloudflareAccountId: requireEnv("CLOUDFLARE_ACCOUNT_ID"),
     host: process.env.HOST ?? "0.0.0.0",
     port: parsePositiveInt("PORT", 3000),
-    maxUploadBytes: parsePositiveInt("MAX_UPLOAD_BYTES", 52_428_800),
-    maxFileCount: parsePositiveInt("MAX_FILE_COUNT", 1000),
-    maxSingleFileBytes: parsePositiveInt("MAX_SINGLE_FILE_BYTES", 10_485_760),
+    maxUploadBytes,
+    maxFileCount,
+    maxSingleFileBytes,
+    maxMultipartFields,
+    maxMultipartFieldSize,
+    maxMultipartParts,
+    bodyLimitBytes: maxUploadBytes + maxMultipartParts * maxMultipartFieldSize,
   };
-}
-
-export function parseEnvironment(value: string): Environment {
-  if (value === "production" || value === "preview") {
-    return value;
-  }
-  throw new Error('environment must be "production" or "preview"');
 }

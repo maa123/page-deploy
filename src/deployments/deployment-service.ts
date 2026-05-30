@@ -4,8 +4,7 @@ import path from "node:path";
 import type { FastifyRequest } from "fastify";
 import type { MultipartFile } from "@fastify/multipart";
 
-import type { AppConfig, Environment } from "../config.js";
-import { parseEnvironment } from "../config.js";
+import type { AppConfig } from "../config.js";
 import {
   deployWithLocalWrangler,
   extractPreviewUrl,
@@ -15,13 +14,14 @@ import { DeploymentRequestError } from "./deployment-errors.js";
 import { MaterializeError, createMaterializeState, materializeFile } from "./materialize-files.js";
 import { assertSafeBranch, assertSafeProjectId } from "./safe-arg.js";
 
+const ALLOWED_FIELD_NAMES = new Set(["branch"]);
+
 export type DeploymentStatus = "success" | "failed";
 
 export interface DeploymentResult {
   status: DeploymentStatus;
   projectId: string;
   branch: string;
-  environment: Environment;
   previewUrl?: string;
   fileCount?: number;
   totalBytes?: number;
@@ -51,7 +51,6 @@ export async function handleDeployment(
   }
 
   let branch: string | undefined;
-  let environment: Environment | undefined;
   const assetDir = await fs.mkdtemp(path.join(os.tmpdir(), `page-deploy-${projectId}-`));
   const state = createMaterializeState();
 
@@ -61,15 +60,16 @@ export async function handleDeployment(
 
     for await (const part of parts) {
       if (part.type === "field") {
-        const value = String(part.value);
+        if (!ALLOWED_FIELD_NAMES.has(part.fieldname)) {
+          throw new DeploymentRequestError(`unexpected field: ${part.fieldname}`, 400);
+        }
+        const raw = part.value;
+        const value = typeof raw === "string" ? raw : String(raw);
+        if (value.length > config.maxMultipartFieldSize) {
+          throw new DeploymentRequestError(`field ${part.fieldname} exceeds maximum size`, 400);
+        }
         if (part.fieldname === "branch") {
           branch = value;
-        } else if (part.fieldname === "environment") {
-          try {
-            environment = parseEnvironment(value);
-          } catch {
-            throw new DeploymentRequestError('environment must be "production" or "preview"', 400);
-          }
         }
         continue;
       }
@@ -116,9 +116,6 @@ export async function handleDeployment(
     const trimmedBranch = branch.trim();
     assertSafeBranch(trimmedBranch);
 
-    if (!environment) {
-      throw new DeploymentRequestError("environment is required", 400);
-    }
     if (!sawFile || state.fileCount === 0) {
       throw new DeploymentRequestError("at least one file is required", 400);
     }
@@ -136,7 +133,6 @@ export async function handleDeployment(
         status: "failed",
         projectId,
         branch: trimmedBranch,
-        environment,
         errorMessage: formatWranglerFailure(stdout, stderr),
       };
     }
@@ -145,7 +141,6 @@ export async function handleDeployment(
       status: "success",
       projectId,
       branch: trimmedBranch,
-      environment,
       previewUrl: extractPreviewUrl(stdout),
       fileCount: state.fileCount,
       totalBytes: state.totalBytes,

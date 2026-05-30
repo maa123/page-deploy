@@ -7,7 +7,10 @@ import { registerDeploymentRoutes } from "./deployments/deployment-routes.js";
 async function main(): Promise<void> {
   const config = loadConfig();
 
-  const app = Fastify({ logger: true });
+  const app = Fastify({
+    logger: true,
+    bodyLimit: config.bodyLimitBytes,
+  });
 
   // Parser limit must exceed the service limit so oversized uploads fail in
   // materializeFile (400) instead of being truncated and deployed.
@@ -16,6 +19,9 @@ async function main(): Promise<void> {
     limits: {
       fileSize: config.maxSingleFileBytes + 1,
       files: config.maxFileCount,
+      fields: config.maxMultipartFields,
+      fieldSize: config.maxMultipartFieldSize,
+      parts: config.maxMultipartParts,
     },
   });
 
