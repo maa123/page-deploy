@@ -57,7 +57,7 @@ describe("normalizeRelativePath", () => {
   });
 
   it("rejects filenames containing null bytes", () => {
-    assert.throws(() => normalizeRelativePath("evil\0file"), PathValidationError);
+    assert.throws(() => normalizeRelativePath("evil\x00file"), PathValidationError);
   });
 
   it("rejects whitespace-only filenames", () => {
