@@ -37,7 +37,7 @@ describe("assertSafeProjectId", () => {
   });
 
   it("rejects ids longer than 128 characters", () => {
-    const tooLong = "a" + "b".repeat(128); // 129 chars
+    const tooLong = "a" + "b".repeat(128); // 129 文字
     assert.throws(() => assertSafeProjectId(tooLong), DeploymentRequestError);
   });
 });
@@ -70,7 +70,7 @@ describe("assertSafeBranch", () => {
   });
 
   it("rejects branch names longer than 256 characters", () => {
-    const tooLong = "a" + "b".repeat(256); // 257 chars
+    const tooLong = "a" + "b".repeat(256); // 257 文字
     assert.throws(() => assertSafeBranch(tooLong), DeploymentRequestError);
   });
 });
