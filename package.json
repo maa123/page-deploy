@@ -4,11 +4,18 @@
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.3.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
+    "deploy": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test src/**/*.test.ts"
+    "test": "node --import tsx --test src/**/*.test.ts",
+    "wrangler:version": "wrangler --version"
+  },
+  "dependencies": {
+    "wrangler": "4.93.0"
   },
   "devDependencies": {
     "@types/node": "^25.9.1",
