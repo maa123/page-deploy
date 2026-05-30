@@ -9,9 +9,12 @@ async function main(): Promise<void> {
 
   const app = Fastify({ logger: true });
 
+  // Parser limit must exceed the service limit so oversized uploads fail in
+  // materializeFile (400) instead of being truncated and deployed.
   await app.register(multipart, {
+    throwFileSizeLimit: true,
     limits: {
-      fileSize: config.maxSingleFileBytes,
+      fileSize: config.maxSingleFileBytes + 1,
       files: config.maxFileCount,
     },
   });

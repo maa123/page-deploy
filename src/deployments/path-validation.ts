@@ -25,6 +25,13 @@ const WINDOWS_RESERVED = new Set([
   "LPT9",
 ]);
 
+export function isWindowsReservedPathSegment(segment: string): boolean {
+  const upper = segment.toUpperCase();
+  const stem = upper.includes(".") ? upper.slice(0, upper.indexOf(".")) : upper;
+  const normalized = stem.replace(/\.+$/, "");
+  return WINDOWS_RESERVED.has(normalized);
+}
+
 export class PathValidationError extends Error {
   constructor(message: string) {
     super(message);
@@ -70,8 +77,7 @@ export function normalizeRelativePath(filename: string): string {
     if (segment === "") {
       throw new PathValidationError("empty path segment is not allowed");
     }
-    const upper = segment.toUpperCase().replace(/\.+$/, "");
-    if (WINDOWS_RESERVED.has(upper)) {
+    if (isWindowsReservedPathSegment(segment)) {
       throw new PathValidationError(`reserved path segment: ${segment}`);
     }
   }

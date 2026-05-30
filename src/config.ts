@@ -6,16 +6,16 @@ function requireEnv(name: string): string {
   return value;
 }
 
-function parsePositiveInt(name: string, fallback: number): number {
+export function parsePositiveInt(name: string, fallback: number): number {
   const raw = process.env[name];
   if (raw === undefined || raw === "") {
     return fallback;
   }
-  const value = Number.parseInt(raw, 10);
-  if (!Number.isFinite(value) || value <= 0) {
+  const trimmed = raw.trim();
+  if (!/^[1-9]\d*$/.test(trimmed)) {
     throw new Error(`Invalid ${name}: must be a positive integer`);
   }
-  return value;
+  return Number(trimmed);
 }
 
 export type Environment = "production" | "preview";
