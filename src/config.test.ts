@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { afterEach, before, describe, it } from "node:test";
+import { afterEach, beforeEach, describe, it } from "node:test";
 
 import { loadConfig, parsePositiveInt } from "./config.js";
 
@@ -76,17 +76,28 @@ describe("parsePositiveInt", () => {
 });
 
 describe("loadConfig", () => {
-  const REQUIRED_VARS = ["CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID"];
+  const CONFIG_ENV_VARS = [
+    "CLOUDFLARE_API_TOKEN",
+    "CLOUDFLARE_ACCOUNT_ID",
+    "PORT",
+    "HOST",
+    "MAX_UPLOAD_BYTES",
+    "MAX_FILE_COUNT",
+    "MAX_SINGLE_FILE_BYTES",
+    "MAX_MULTIPART_FIELDS",
+    "MAX_MULTIPART_FIELD_SIZE",
+  ];
   const originals: Record<string, string | undefined> = {};
 
-  before(() => {
-    for (const key of REQUIRED_VARS) {
+  beforeEach(() => {
+    for (const key of CONFIG_ENV_VARS) {
       originals[key] = process.env[key];
+      delete process.env[key];
     }
   });
 
   afterEach(() => {
-    for (const key of REQUIRED_VARS) {
+    for (const key of CONFIG_ENV_VARS) {
       if (originals[key] === undefined) {
         delete process.env[key];
       } else {
