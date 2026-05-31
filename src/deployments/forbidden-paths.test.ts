@@ -3,8 +3,8 @@ import { describe, it } from "node:test";
 
 import { isForbiddenRelativePath } from "./forbidden-paths.js";
 
-describe("isForbiddenRelativePath", () => {
-  it("rejects worker and functions paths", () => {
+describe("禁止相対パスの判定", () => {
+  it("worker と functions のパスを拒否する", () => {
     assert.equal(isForbiddenRelativePath("_worker.js"), true);
     assert.equal(isForbiddenRelativePath("_worker.bundle"), true);
     assert.equal(isForbiddenRelativePath("functions/api.ts"), true);
@@ -12,14 +12,14 @@ describe("isForbiddenRelativePath", () => {
     assert.equal(isForbiddenRelativePath("_routes.json"), true);
   });
 
-  it("rejects functions-filepath-routing-config.json", () => {
+  it("functions-filepath-routing-config.json を拒否する", () => {
     assert.equal(
       isForbiddenRelativePath("functions-filepath-routing-config.json"),
       true,
     );
   });
 
-  it("rejects forbidden basenames nested inside directories", () => {
+  it("ディレクトリ内にネストした禁止ベース名を拒否する", () => {
     assert.equal(isForbiddenRelativePath("subdir/_worker.js"), true);
     assert.equal(isForbiddenRelativePath("a/b/_routes.json"), true);
     assert.equal(
@@ -28,21 +28,21 @@ describe("isForbiddenRelativePath", () => {
     );
   });
 
-  it("rejects functions directory with Windows-style backslash separator", () => {
+  it("Windows 形式のバックスラッシュ区切りの functions を拒否する", () => {
     assert.equal(isForbiddenRelativePath("functions\\api.ts"), true);
   });
 
-  it("rejects paths that start with functions/", () => {
+  it("functions/ で始まるパスを拒否する", () => {
     assert.equal(isForbiddenRelativePath("functions/nested/route.ts"), true);
   });
 
-  it("allows headers and redirects", () => {
+  it("_headers と _redirects を許可する", () => {
     assert.equal(isForbiddenRelativePath("_headers"), false);
     assert.equal(isForbiddenRelativePath("_redirects"), false);
     assert.equal(isForbiddenRelativePath("index.html"), false);
   });
 
-  it("allows paths whose name only starts with 'functions' as a prefix", () => {
+  it("functions を接頭辞に持つだけのパス名は許可する", () => {
     assert.equal(isForbiddenRelativePath("functions-extra/route.ts"), false);
     assert.equal(isForbiddenRelativePath("functionsdata"), false);
   });

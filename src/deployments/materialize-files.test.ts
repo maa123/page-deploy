@@ -12,8 +12,8 @@ import {
   materializeFile,
 } from "./materialize-files.js";
 
-describe("assertNoPathHierarchyCollision", () => {
-  it("rejects file/directory path collisions", () => {
+describe("パス階層の衝突チェック", () => {
+  it("ファイルとディレクトリのパス衝突を拒否する", () => {
     const written = new Set(["assets"]);
     assert.throws(
       () => assertNoPathHierarchyCollision(written, "assets/app.js"),
@@ -25,7 +25,7 @@ describe("assertNoPathHierarchyCollision", () => {
     );
   });
 
-  it("rejects when new path is a parent of an existing path", () => {
+  it("新しいパスが既存パスの親のとき拒否する", () => {
     const written = new Set(["assets/app.js"]);
     assert.throws(
       () => assertNoPathHierarchyCollision(written, "assets"),
@@ -37,7 +37,7 @@ describe("assertNoPathHierarchyCollision", () => {
     );
   });
 
-  it("rejects an exact duplicate path", () => {
+  it("完全に重複したパスを拒否する", () => {
     const written = new Set(["index.html"]);
     assert.throws(
       () => assertNoPathHierarchyCollision(written, "index.html"),
@@ -49,7 +49,7 @@ describe("assertNoPathHierarchyCollision", () => {
     );
   });
 
-  it("allows non-conflicting paths", () => {
+  it("衝突しないパスは許可する", () => {
     const written = new Set(["assets/app.js"]);
     assert.doesNotThrow(() =>
       assertNoPathHierarchyCollision(written, "assets/style.css"),
@@ -57,8 +57,8 @@ describe("assertNoPathHierarchyCollision", () => {
   });
 });
 
-describe("materializeFile", () => {
-  it("writes a file successfully and updates state", async () => {
+describe("ファイルの書き出し", () => {
+  it("ファイルを書き込み状態を更新する", async () => {
     const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), "page-deploy-test-"));
     try {
       const state = createMaterializeState();
@@ -84,7 +84,7 @@ describe("materializeFile", () => {
     }
   });
 
-  it("writes nested files and creates intermediate directories", async () => {
+  it("ネストしたファイルを書き込み中間ディレクトリを作成する", async () => {
     const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), "page-deploy-test-"));
     try {
       const state = createMaterializeState();
@@ -106,7 +106,7 @@ describe("materializeFile", () => {
     }
   });
 
-  it("rejects conflicting paths when a parent path is already a file", async () => {
+  it("親パスがすでにファイルのとき衝突するパスを拒否する", async () => {
     const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), "page-deploy-test-"));
     try {
       const state = createMaterializeState();
@@ -140,7 +140,7 @@ describe("materializeFile", () => {
     }
   });
 
-  it("rejects duplicate paths", async () => {
+  it("重複パスを拒否する", async () => {
     const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), "page-deploy-test-"));
     try {
       const state = createMaterializeState();
@@ -174,7 +174,7 @@ describe("materializeFile", () => {
     }
   });
 
-  it("rejects when file count limit is reached", async () => {
+  it("ファイル数上限に達したとき拒否する", async () => {
     const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), "page-deploy-test-"));
     try {
       const limits = { maxFileCount: 1, maxUploadBytes: 1024, maxSingleFileBytes: 512 };
@@ -208,7 +208,7 @@ describe("materializeFile", () => {
     }
   });
 
-  it("rejects a file that exceeds the single-file size limit", async () => {
+  it("単一ファイルサイズ上限を超えるファイルを拒否する", async () => {
     const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), "page-deploy-test-"));
     try {
       const limits = { maxFileCount: 10, maxUploadBytes: 1024, maxSingleFileBytes: 3 };
@@ -234,7 +234,7 @@ describe("materializeFile", () => {
     }
   });
 
-  it("rejects when total upload size is exceeded", async () => {
+  it("合計アップロードサイズ上限を超えたとき拒否する", async () => {
     const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), "page-deploy-test-"));
     try {
       const limits = { maxFileCount: 10, maxUploadBytes: 5, maxSingleFileBytes: 512 };
@@ -271,7 +271,7 @@ describe("materializeFile", () => {
     }
   });
 
-  it("rejects forbidden paths such as _worker.js", async () => {
+  it("_worker.js などの禁止パスを拒否する", async () => {
     const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), "page-deploy-test-"));
     try {
       const state = createMaterializeState();
@@ -297,7 +297,7 @@ describe("materializeFile", () => {
     }
   });
 
-  it("rejects invalid paths such as path traversal", async () => {
+  it("パストラバーサルなどの無効なパスを拒否する", async () => {
     const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), "page-deploy-test-"));
     try {
       const state = createMaterializeState();

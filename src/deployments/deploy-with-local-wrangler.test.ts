@@ -6,42 +6,42 @@ import {
   formatWranglerFailure,
 } from "./deploy-with-local-wrangler.js";
 
-describe("extractPreviewUrl", () => {
-  it("returns a pages.dev URL when present in stdout", () => {
+describe("プレビュー URL の抽出", () => {
+  it("stdout に pages.dev URL があるときその URL を返す", () => {
     const stdout =
       "Deploying...\nSuccess! Preview URL: https://abc123.my-site.pages.dev\nDone.";
     assert.equal(extractPreviewUrl(stdout), "https://abc123.my-site.pages.dev");
   });
 
-  it("returns the first pages.dev URL when multiple are present", () => {
+  it("複数の pages.dev URL があるとき最初の URL を返す", () => {
     const stdout =
       "https://first.pages.dev then https://second.pages.dev";
     assert.equal(extractPreviewUrl(stdout), "https://first.pages.dev");
   });
 
-  it("returns undefined when no pages.dev URL is present", () => {
+  it("pages.dev URL がないとき undefined を返す", () => {
     assert.equal(extractPreviewUrl("Deploy failed."), undefined);
     assert.equal(extractPreviewUrl(""), undefined);
   });
 });
 
-describe("formatWranglerFailure", () => {
-  it("returns trimmed stderr when stderr is non-empty", () => {
+describe("Wrangler 失敗メッセージの整形", () => {
+  it("stderr が空でないときトリムした stderr を返す", () => {
     const result = formatWranglerFailure("  stdout  ", "  some error  ");
     assert.equal(result, "some error");
   });
 
-  it("falls back to stdout when stderr is empty", () => {
+  it("stderr が空のとき stdout にフォールバックする", () => {
     const result = formatWranglerFailure("stdout message", "");
     assert.equal(result, "stdout message");
   });
 
-  it("returns fallback message when both stdout and stderr are empty", () => {
+  it("stdout と stderr がともに空のときフォールバックメッセージを返す", () => {
     const result = formatWranglerFailure("", "");
     assert.equal(result, "wrangler deploy failed");
   });
 
-  it("redacts CLOUDFLARE_API_TOKEN in stderr", () => {
+  it("stderr 内の CLOUDFLARE_API_TOKEN をマスクする", () => {
     const result = formatWranglerFailure(
       "",
       "error: CLOUDFLARE_API_TOKEN=supersecret failed",
@@ -50,7 +50,7 @@ describe("formatWranglerFailure", () => {
     assert.doesNotMatch(result, /supersecret/);
   });
 
-  it("redacts CLOUDFLARE_API_TOKEN in stdout when stderr is absent", () => {
+  it("stderr がないとき stdout 内の CLOUDFLARE_API_TOKEN をマスクする", () => {
     const result = formatWranglerFailure(
       "CLOUDFLARE_API_TOKEN=mysecret caused a problem",
       "",
