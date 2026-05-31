@@ -1,4 +1,5 @@
-import type { FastifyInstance } from "fastify";
+import { timingSafeEqual } from "node:crypto";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 
 import type { AppConfig } from "../config.js";
 import { DeploymentRequestError } from "./deployment-errors.js";
@@ -44,6 +45,23 @@ function multipartLimitMessage(error: unknown): string {
   return "upload limit exceeded";
 }
 
+function getApiKeyFromHeader(request: FastifyRequest): string | undefined {
+  const header = request.headers["x-api-key"];
+  return typeof header === "string" ? header : undefined;
+}
+
+function apiKeysMatch(expected: string, actual: string | undefined): boolean {
+  if (actual === undefined) {
+    return false;
+  }
+  const expectedBuffer = Buffer.from(expected);
+  const actualBuffer = Buffer.from(actual);
+  if (expectedBuffer.length !== actualBuffer.length) {
+    return false;
+  }
+  return timingSafeEqual(expectedBuffer, actualBuffer);
+}
+
 export async function registerDeploymentRoutes(
   app: FastifyInstance,
   config: AppConfig,
@@ -51,6 +69,13 @@ export async function registerDeploymentRoutes(
   app.post<{ Params: { projectId: string } }>(
     "/v1/projects/:projectId/deployments",
     async (request, reply) => {
+      if (!apiKeysMatch(config.apiKey, getApiKeyFromHeader(request))) {
+        return reply.code(401).send({
+          status: "failed",
+          projectId: request.params.projectId,
+          errorMessage: "unauthorized",
+        });
+      }
       try {
         const result = await handleDeployment(request, config);
         const statusCode = result.status === "success" ? 200 : 502;

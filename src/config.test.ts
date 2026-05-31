@@ -79,6 +79,7 @@ describe("loadConfig", () => {
   const CONFIG_ENV_VARS = [
     "CLOUDFLARE_API_TOKEN",
     "CLOUDFLARE_ACCOUNT_ID",
+    "API_KEY",
     "PORT",
     "HOST",
     "MAX_UPLOAD_BYTES",
@@ -109,9 +110,11 @@ describe("loadConfig", () => {
   it("loads config with required env vars set", () => {
     process.env.CLOUDFLARE_API_TOKEN = "test-token";
     process.env.CLOUDFLARE_ACCOUNT_ID = "test-account";
+    process.env.API_KEY = "test-api-key";
     const config = loadConfig();
     assert.equal(config.cloudflareApiToken, "test-token");
     assert.equal(config.cloudflareAccountId, "test-account");
+    assert.equal(config.apiKey, "test-api-key");
     assert.equal(config.port, 3000);
     assert.equal(config.host, "0.0.0.0");
     assert.equal(config.maxFileCount, 1000);
@@ -120,18 +123,28 @@ describe("loadConfig", () => {
   it("throws when CLOUDFLARE_API_TOKEN is missing", () => {
     delete process.env.CLOUDFLARE_API_TOKEN;
     process.env.CLOUDFLARE_ACCOUNT_ID = "test-account";
+    process.env.API_KEY = "test-api-key";
     assert.throws(() => loadConfig(), /Missing CLOUDFLARE_API_TOKEN/);
   });
 
   it("throws when CLOUDFLARE_ACCOUNT_ID is missing", () => {
     process.env.CLOUDFLARE_API_TOKEN = "test-token";
     delete process.env.CLOUDFLARE_ACCOUNT_ID;
+    process.env.API_KEY = "test-api-key";
     assert.throws(() => loadConfig(), /Missing CLOUDFLARE_ACCOUNT_ID/);
+  });
+
+  it("throws when API_KEY is missing", () => {
+    process.env.CLOUDFLARE_API_TOKEN = "test-token";
+    process.env.CLOUDFLARE_ACCOUNT_ID = "test-account";
+    delete process.env.API_KEY;
+    assert.throws(() => loadConfig(), /Missing API_KEY/);
   });
 
   it("computes bodyLimitBytes as sum of upload and field limits", () => {
     process.env.CLOUDFLARE_API_TOKEN = "test-token";
     process.env.CLOUDFLARE_ACCOUNT_ID = "test-account";
+    process.env.API_KEY = "test-api-key";
     const config = loadConfig();
     const expectedParts = config.maxFileCount + config.maxMultipartFields + 2;
     assert.equal(config.maxMultipartParts, expectedParts);
