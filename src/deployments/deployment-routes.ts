@@ -59,7 +59,7 @@ function apiKeysMatch(expected: string, actual: string | undefined): boolean {
   const expectedBuffer = Buffer.from(expected);
   const actualBuffer = Buffer.from(actual);
   const paddedActual = Buffer.alloc(expectedBuffer.length);
-  actualBuffer.copy(paddedActual, 0, 0, expectedBuffer.length);
+  actualBuffer.copy(paddedActual, 0, 0, Math.min(actualBuffer.length, expectedBuffer.length));
   return timingSafeEqual(expectedBuffer, paddedActual) && actualBuffer.length === expectedBuffer.length;
 }
 
