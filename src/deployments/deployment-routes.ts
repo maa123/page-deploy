@@ -51,16 +51,16 @@ function getApiKeyFromHeader(request: FastifyRequest): string | undefined {
     const firstHeaderValue = header.split(",", 1)[0];
     return firstHeaderValue?.trim();
   }
-  if (Array.isArray(header)) return header[0];
+  if (Array.isArray(header)) return header[0]?.trim();
   return undefined;
 }
 
 function apiKeysMatch(expected: string, actual: string | undefined): boolean {
   const expectedBuffer = Buffer.from(expected);
   const actualBuffer = Buffer.from(actual ?? "");
-  const paddedActual = Buffer.alloc(expectedBuffer.length);
-  actualBuffer.copy(paddedActual, 0, 0, Math.min(actualBuffer.length, expectedBuffer.length));
-  return timingSafeEqual(expectedBuffer, paddedActual) && actualBuffer.length === expectedBuffer.length;
+  const sameLength = actualBuffer.length === expectedBuffer.length;
+  const compareTarget = sameLength ? actualBuffer : expectedBuffer;
+  return timingSafeEqual(expectedBuffer, compareTarget) && sameLength;
 }
 
 export async function registerDeploymentRoutes(

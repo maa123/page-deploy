@@ -32,17 +32,18 @@ describe("registerDeploymentRoutes API key auth", () => {
 
   async function buildApp(): Promise<ReturnType<typeof Fastify>> {
     const app = Fastify();
+    const config = createConfig();
     await app.register(multipart, {
       limits: {
-        fileSize: 10_485_761,
-        files: 1000,
-        fields: 4,
-        fieldSize: 256,
-        parts: 1006,
+        fileSize: config.maxSingleFileBytes + 1,
+        files: config.maxFileCount,
+        fields: config.maxMultipartFields,
+        fieldSize: config.maxMultipartFieldSize,
+        parts: config.maxMultipartParts,
       },
       throwFileSizeLimit: true,
     });
-    await registerDeploymentRoutes(app, createConfig());
+    await registerDeploymentRoutes(app, config);
     apps.push(app);
     return app;
   }
