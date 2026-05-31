@@ -5,7 +5,7 @@ import { DeploymentRequestError } from "./deployment-errors.js";
 import { assertSafeBranch, assertSafeProjectId } from "./safe-arg.js";
 
 describe("プロジェクト ID の安全検証", () => {
-  it("英数字のプロジェクト ID を受け入れる", () => {
+  it("ハイフンを含むプロジェクト ID を受け入れる", () => {
     assert.doesNotThrow(() => assertSafeProjectId("my-pages-site"));
   });
 
