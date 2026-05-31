@@ -47,7 +47,9 @@ function multipartLimitMessage(error: unknown): string {
 
 function getApiKeyFromHeader(request: FastifyRequest): string | undefined {
   const header = request.headers["x-api-key"];
-  return typeof header === "string" ? header : undefined;
+  if (typeof header === "string") return header;
+  if (Array.isArray(header)) return header[0];
+  return undefined;
 }
 
 function apiKeysMatch(expected: string, actual: string | undefined): boolean {
@@ -56,10 +58,9 @@ function apiKeysMatch(expected: string, actual: string | undefined): boolean {
   }
   const expectedBuffer = Buffer.from(expected);
   const actualBuffer = Buffer.from(actual);
-  if (expectedBuffer.length !== actualBuffer.length) {
-    return false;
-  }
-  return timingSafeEqual(expectedBuffer, actualBuffer);
+  const paddedActual = Buffer.alloc(expectedBuffer.length);
+  actualBuffer.copy(paddedActual, 0, 0, expectedBuffer.length);
+  return timingSafeEqual(expectedBuffer, paddedActual) && actualBuffer.length === expectedBuffer.length;
 }
 
 export async function registerDeploymentRoutes(

@@ -63,6 +63,25 @@ describe("registerDeploymentRoutes API key auth", () => {
     });
   });
 
+  it("returns 401 when x-api-key header is invalid", async () => {
+    const app = await buildApp();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/projects/test/deployments",
+      headers: {
+        "x-api-key": "wrong-api-key",
+      },
+    });
+
+    assert.equal(response.statusCode, 401);
+    assert.deepEqual(response.json(), {
+      status: "failed",
+      projectId: "test",
+      errorMessage: "unauthorized",
+    });
+  });
+
   it("continues request handling when x-api-key is valid", async () => {
     const app = await buildApp();
 
