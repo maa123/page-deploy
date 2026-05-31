@@ -86,6 +86,7 @@ describe("設定の読み込み", () => {
     "ADMIN_HOST",
     "ADMIN_PORT",
     "ADMIN_SESSION_SECURE",
+    "TRUST_PROXY",
     "MAX_UPLOAD_BYTES",
     "MAX_FILE_COUNT",
     "MAX_SINGLE_FILE_BYTES",

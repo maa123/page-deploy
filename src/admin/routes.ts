@@ -114,6 +114,7 @@ export async function registerAdminRoutes(
       return reply.code(401).send({ error: "invalid credentials" });
     }
 
+    await request.session.regenerate();
     request.session.admin = {
       adminUserId: admin.id,
       username: admin.username,

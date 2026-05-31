@@ -12,6 +12,7 @@ export async function createApiServer(
   const app = Fastify({
     logger: true,
     bodyLimit: config.bodyLimitBytes,
+    trustProxy: config.trustProxy,
   });
 
   await app.register(multipart, {

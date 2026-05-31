@@ -17,6 +17,7 @@ function createConfig(): AppConfig {
     cloudflareApiToken: "cf-token",
     cloudflareAccountId: "cf-account",
     sqlitePath: ":memory:",
+    trustProxy: false,
     host: "127.0.0.1",
     port: 3000,
     adminHost: "127.0.0.1",

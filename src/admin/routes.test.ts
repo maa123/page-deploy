@@ -15,6 +15,7 @@ function createConfig(): AppConfig {
     cloudflareApiToken: "cf-token",
     cloudflareAccountId: "cf-account",
     sqlitePath: ":memory:",
+    trustProxy: false,
     host: "127.0.0.1",
     port: 3000,
     adminHost: "127.0.0.1",
@@ -66,6 +67,17 @@ describe("admin routes", () => {
 
     const cookieHeader = login.headers["set-cookie"];
     assert.ok(cookieHeader);
+
+    const relogin = await app.inject({
+      method: "POST",
+      url: "/admin/login",
+      headers: { cookie: String(cookieHeader) },
+      payload: { username: "admin", password: "admin-password-12345" },
+    });
+    assert.equal(relogin.statusCode, 200);
+    const newCookieHeader = relogin.headers["set-cookie"];
+    assert.ok(newCookieHeader);
+    assert.notEqual(String(cookieHeader), String(newCookieHeader));
 
     const createProject = await app.inject({
       method: "POST",

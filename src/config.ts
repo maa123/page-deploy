@@ -1,3 +1,7 @@
+import { loadTrustProxy, type TrustProxySetting } from "./http/trust-proxy.js";
+
+export type { TrustProxySetting };
+
 function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) {
@@ -60,6 +64,7 @@ export interface AppConfig {
   cloudflareApiToken: string;
   cloudflareAccountId: string;
   sqlitePath: string;
+  trustProxy: TrustProxySetting;
   host: string;
   port: number;
   adminHost: string;
@@ -92,6 +97,7 @@ export function loadConfig(): AppConfig {
     cloudflareApiToken: requireEnv("CLOUDFLARE_API_TOKEN"),
     cloudflareAccountId: requireEnv("CLOUDFLARE_ACCOUNT_ID"),
     sqlitePath: process.env.SQLITE_PATH?.trim() || "./data/app.db",
+    trustProxy: loadTrustProxy(),
     host: process.env.HOST ?? "0.0.0.0",
     port: parsePositiveInt("PORT", 3000),
     adminHost: process.env.ADMIN_HOST ?? "127.0.0.1",
