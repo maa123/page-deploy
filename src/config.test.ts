@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, it } from "node:test";
 
 import { loadConfig, parsePositiveInt } from "./config.js";
 
-describe("parsePositiveInt", () => {
+describe("正の整数のパース", () => {
   const original = process.env.TEST_PORT;
 
   afterEach(() => {
@@ -14,27 +14,27 @@ describe("parsePositiveInt", () => {
     }
   });
 
-  it("returns fallback when env var is not set", () => {
+  it("環境変数が未設定のときフォールバックを返す", () => {
     delete process.env.TEST_PORT;
     assert.equal(parsePositiveInt("TEST_PORT", 8080), 8080);
   });
 
-  it("returns fallback when env var is empty string", () => {
+  it("環境変数が空文字列のときフォールバックを返す", () => {
     process.env.TEST_PORT = "";
     assert.equal(parsePositiveInt("TEST_PORT", 8080), 8080);
   });
 
-  it("accepts valid integers", () => {
+  it("有効な整数を受け入れる", () => {
     process.env.TEST_PORT = "3000";
     assert.equal(parsePositiveInt("TEST_PORT", 80), 3000);
   });
 
-  it("trims surrounding whitespace before parsing", () => {
+  it("前後の空白をトリムしてからパースする", () => {
     process.env.TEST_PORT = "  4000  ";
     assert.equal(parsePositiveInt("TEST_PORT", 80), 4000);
   });
 
-  it("rejects trailing non-numeric characters", () => {
+  it("末尾に非数字文字がある値を拒否する", () => {
     process.env.TEST_PORT = "3000abc";
     assert.throws(
       () => parsePositiveInt("TEST_PORT", 3000),
@@ -42,7 +42,7 @@ describe("parsePositiveInt", () => {
     );
   });
 
-  it("rejects zero", () => {
+  it("ゼロを拒否する", () => {
     process.env.TEST_PORT = "0";
     assert.throws(
       () => parsePositiveInt("TEST_PORT", 3000),
@@ -50,7 +50,7 @@ describe("parsePositiveInt", () => {
     );
   });
 
-  it("rejects negative numbers", () => {
+  it("負の数を拒否する", () => {
     process.env.TEST_PORT = "-1";
     assert.throws(
       () => parsePositiveInt("TEST_PORT", 3000),
@@ -58,7 +58,7 @@ describe("parsePositiveInt", () => {
     );
   });
 
-  it("rejects floating-point values", () => {
+  it("浮動小数点数を拒否する", () => {
     process.env.TEST_PORT = "3.14";
     assert.throws(
       () => parsePositiveInt("TEST_PORT", 3000),
@@ -66,7 +66,7 @@ describe("parsePositiveInt", () => {
     );
   });
 
-  it("rejects whitespace-only values", () => {
+  it("空白のみの値を拒否する", () => {
     process.env.TEST_PORT = "   ";
     assert.throws(
       () => parsePositiveInt("TEST_PORT", 3000),
@@ -75,7 +75,7 @@ describe("parsePositiveInt", () => {
   });
 });
 
-describe("loadConfig", () => {
+describe("設定の読み込み", () => {
   const CONFIG_ENV_VARS = [
     "CLOUDFLARE_API_TOKEN",
     "CLOUDFLARE_ACCOUNT_ID",
@@ -107,7 +107,7 @@ describe("loadConfig", () => {
     }
   });
 
-  it("loads config with required env vars set", () => {
+  it("必須の環境変数が設定されていれば設定を読み込む", () => {
     process.env.CLOUDFLARE_API_TOKEN = "test-token";
     process.env.CLOUDFLARE_ACCOUNT_ID = "test-account";
     process.env.API_KEY = "test-api-key";
@@ -120,14 +120,14 @@ describe("loadConfig", () => {
     assert.equal(config.maxFileCount, 1000);
   });
 
-  it("throws when CLOUDFLARE_API_TOKEN is missing", () => {
+  it("CLOUDFLARE_API_TOKEN が未設定のとき例外を投げる", () => {
     delete process.env.CLOUDFLARE_API_TOKEN;
     process.env.CLOUDFLARE_ACCOUNT_ID = "test-account";
     process.env.API_KEY = "test-api-key";
     assert.throws(() => loadConfig(), /Missing CLOUDFLARE_API_TOKEN/);
   });
 
-  it("throws when CLOUDFLARE_ACCOUNT_ID is missing", () => {
+  it("CLOUDFLARE_ACCOUNT_ID が未設定のとき例外を投げる", () => {
     process.env.CLOUDFLARE_API_TOKEN = "test-token";
     delete process.env.CLOUDFLARE_ACCOUNT_ID;
     process.env.API_KEY = "test-api-key";
@@ -141,7 +141,7 @@ describe("loadConfig", () => {
     assert.throws(() => loadConfig(), /Missing API_KEY/);
   });
 
-  it("computes bodyLimitBytes as sum of upload and field limits", () => {
+  it("bodyLimitBytes をアップロード上限とフィールド上限の合計として計算する", () => {
     process.env.CLOUDFLARE_API_TOKEN = "test-token";
     process.env.CLOUDFLARE_ACCOUNT_ID = "test-account";
     process.env.API_KEY = "test-api-key";
