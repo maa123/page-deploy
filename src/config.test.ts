@@ -79,6 +79,7 @@ describe("設定の読み込み", () => {
   const CONFIG_ENV_VARS = [
     "CLOUDFLARE_API_TOKEN",
     "CLOUDFLARE_ACCOUNT_ID",
+    "API_KEY",
     "PORT",
     "HOST",
     "MAX_UPLOAD_BYTES",
@@ -109,9 +110,11 @@ describe("設定の読み込み", () => {
   it("必須の環境変数が設定されていれば設定を読み込む", () => {
     process.env.CLOUDFLARE_API_TOKEN = "test-token";
     process.env.CLOUDFLARE_ACCOUNT_ID = "test-account";
+    process.env.API_KEY = "test-api-key";
     const config = loadConfig();
     assert.equal(config.cloudflareApiToken, "test-token");
     assert.equal(config.cloudflareAccountId, "test-account");
+    assert.equal(config.apiKey, "test-api-key");
     assert.equal(config.port, 3000);
     assert.equal(config.host, "0.0.0.0");
     assert.equal(config.maxFileCount, 1000);
@@ -120,18 +123,43 @@ describe("設定の読み込み", () => {
   it("CLOUDFLARE_API_TOKEN が未設定のとき例外を投げる", () => {
     delete process.env.CLOUDFLARE_API_TOKEN;
     process.env.CLOUDFLARE_ACCOUNT_ID = "test-account";
+    process.env.API_KEY = "test-api-key";
     assert.throws(() => loadConfig(), /Missing CLOUDFLARE_API_TOKEN/);
   });
 
   it("CLOUDFLARE_ACCOUNT_ID が未設定のとき例外を投げる", () => {
     process.env.CLOUDFLARE_API_TOKEN = "test-token";
     delete process.env.CLOUDFLARE_ACCOUNT_ID;
+    process.env.API_KEY = "test-api-key";
     assert.throws(() => loadConfig(), /Missing CLOUDFLARE_ACCOUNT_ID/);
+  });
+
+  it("throws when API_KEY is missing", () => {
+    process.env.CLOUDFLARE_API_TOKEN = "test-token";
+    process.env.CLOUDFLARE_ACCOUNT_ID = "test-account";
+    delete process.env.API_KEY;
+    assert.throws(() => loadConfig(), /Missing API_KEY/);
+  });
+
+  it("throws when API_KEY is whitespace only", () => {
+    process.env.CLOUDFLARE_API_TOKEN = "test-token";
+    process.env.CLOUDFLARE_ACCOUNT_ID = "test-account";
+    process.env.API_KEY = "   ";
+    assert.throws(() => loadConfig(), /Missing API_KEY/);
+  });
+
+  it("trims surrounding whitespace from API_KEY", () => {
+    process.env.CLOUDFLARE_API_TOKEN = "test-token";
+    process.env.CLOUDFLARE_ACCOUNT_ID = "test-account";
+    process.env.API_KEY = "  test-api-key  ";
+    const config = loadConfig();
+    assert.equal(config.apiKey, "test-api-key");
   });
 
   it("bodyLimitBytes をアップロード上限とフィールド上限の合計として計算する", () => {
     process.env.CLOUDFLARE_API_TOKEN = "test-token";
     process.env.CLOUDFLARE_ACCOUNT_ID = "test-account";
+    process.env.API_KEY = "test-api-key";
     const config = loadConfig();
     const expectedParts = config.maxFileCount + config.maxMultipartFields + 2;
     assert.equal(config.maxMultipartParts, expectedParts);

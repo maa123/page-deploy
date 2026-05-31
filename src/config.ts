@@ -6,6 +6,14 @@ function requireEnv(name: string): string {
   return value;
 }
 
+function requireTrimmedEnv(name: string): string {
+  const trimmed = requireEnv(name).trim();
+  if (trimmed === "") {
+    throw new Error(`Missing ${name}`);
+  }
+  return trimmed;
+}
+
 export function parsePositiveInt(name: string, fallback: number): number {
   const raw = process.env[name];
   if (raw === undefined || raw === "") {
@@ -21,6 +29,7 @@ export function parsePositiveInt(name: string, fallback: number): number {
 export interface AppConfig {
   cloudflareApiToken: string;
   cloudflareAccountId: string;
+  apiKey: string;
   host: string;
   port: number;
   maxUploadBytes: number;
@@ -43,6 +52,7 @@ export function loadConfig(): AppConfig {
   return {
     cloudflareApiToken: requireEnv("CLOUDFLARE_API_TOKEN"),
     cloudflareAccountId: requireEnv("CLOUDFLARE_ACCOUNT_ID"),
+    apiKey: requireTrimmedEnv("API_KEY"),
     host: process.env.HOST ?? "0.0.0.0",
     port: parsePositiveInt("PORT", 3000),
     maxUploadBytes,
