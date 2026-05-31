@@ -154,4 +154,76 @@ describe("authorizeDeploymentCreate", () => {
       assert.equal(result.statusCode, 401);
     }
   });
+
+  it("returns 403 when allowed_branches JSON is malformed", async () => {
+    const { db, projectId, bearer, branch } = await seedProjectWithKey();
+    db.prepare(`UPDATE api_keys SET allowed_branches = ? WHERE key_id = ?`).run(
+      "not-valid-json",
+      "testkeyid01",
+    );
+    const result = await authorizeDeploymentCreate({
+      db,
+      authorizationHeader: bearer,
+      routeProjectId: projectId,
+      branch,
+      clientIp: "127.0.0.1",
+      globalLimits: {
+        maxUploadBytes: 1000,
+        maxFileCount: 10,
+        maxSingleFileBytes: 500,
+      },
+    });
+    assert.equal(isAuthFailure(result), true);
+    if (isAuthFailure(result)) {
+      assert.equal(result.statusCode, 403);
+    }
+  });
+
+  it("returns 403 when allowed_ip_cidrs JSON is malformed", async () => {
+    const { db, projectId, bearer, branch } = await seedProjectWithKey();
+    db.prepare(`UPDATE api_keys SET allowed_ip_cidrs = ? WHERE key_id = ?`).run(
+      "[broken",
+      "testkeyid01",
+    );
+    const result = await authorizeDeploymentCreate({
+      db,
+      authorizationHeader: bearer,
+      routeProjectId: projectId,
+      branch,
+      clientIp: "127.0.0.1",
+      globalLimits: {
+        maxUploadBytes: 1000,
+        maxFileCount: 10,
+        maxSingleFileBytes: 500,
+      },
+    });
+    assert.equal(isAuthFailure(result), true);
+    if (isAuthFailure(result)) {
+      assert.equal(result.statusCode, 403);
+    }
+  });
+
+  it("returns 403 when permissions JSON is malformed", async () => {
+    const { db, projectId, bearer, branch } = await seedProjectWithKey();
+    db.prepare(`UPDATE api_keys SET permissions = ? WHERE key_id = ?`).run(
+      "{bad",
+      "testkeyid01",
+    );
+    const result = await authorizeDeploymentCreate({
+      db,
+      authorizationHeader: bearer,
+      routeProjectId: projectId,
+      branch,
+      clientIp: "127.0.0.1",
+      globalLimits: {
+        maxUploadBytes: 1000,
+        maxFileCount: 10,
+        maxSingleFileBytes: 500,
+      },
+    });
+    assert.equal(isAuthFailure(result), true);
+    if (isAuthFailure(result)) {
+      assert.equal(result.statusCode, 403);
+    }
+  });
 });

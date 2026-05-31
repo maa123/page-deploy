@@ -1,7 +1,10 @@
 import type { DatabaseSync } from "node:sqlite";
 
 import type { AppConfig } from "../config.js";
-import { parseJsonStringArray } from "../db/json-columns.js";
+import {
+  parseOptionalJsonStringArray,
+  parseRequiredJsonStringArray,
+} from "../db/json-columns.js";
 import { findApiKeyByKeyId } from "../db/repositories/api-keys.js";
 import { findProjectById } from "../db/repositories/projects.js";
 import { parseBearerAuthorization, verifySecret } from "./api-key.js";
@@ -41,7 +44,7 @@ function isExpired(expiresAt: string | null): boolean {
 }
 
 function isBranchAllowed(branch: string, allowedBranches: string[] | null): boolean {
-  if (!allowedBranches || allowedBranches.length === 0) {
+  if (allowedBranches === null || allowedBranches.length === 0) {
     return true;
   }
   return allowedBranches.includes(branch);
@@ -77,18 +80,24 @@ export async function authorizeDeploymentCreate(input: {
     return { ok: false, statusCode: 403, message: "forbidden" };
   }
 
-  const permissions = parseJsonStringArray(apiKey.permissions);
+  const permissions = parseRequiredJsonStringArray(apiKey.permissions);
   if (!permissions || !hasPermission(permissions, PERMISSION_DEPLOYMENT_CREATE)) {
     return { ok: false, statusCode: 403, message: "forbidden" };
   }
 
-  const allowedBranches = parseJsonStringArray(apiKey.allowed_branches);
+  const allowedBranches = parseOptionalJsonStringArray(apiKey.allowed_branches);
+  if (allowedBranches === undefined) {
+    return { ok: false, statusCode: 403, message: "forbidden" };
+  }
   if (!isBranchAllowed(input.branch, allowedBranches)) {
     return { ok: false, statusCode: 403, message: "forbidden" };
   }
 
-  const allowedIpCidrs = parseJsonStringArray(apiKey.allowed_ip_cidrs);
-  if (allowedIpCidrs && !isIpAllowed(input.clientIp, allowedIpCidrs)) {
+  const allowedIpCidrs = parseOptionalJsonStringArray(apiKey.allowed_ip_cidrs);
+  if (allowedIpCidrs === undefined) {
+    return { ok: false, statusCode: 403, message: "forbidden" };
+  }
+  if (allowedIpCidrs !== null && !isIpAllowed(input.clientIp, allowedIpCidrs)) {
     return { ok: false, statusCode: 403, message: "forbidden" };
   }
 
@@ -122,24 +131,4 @@ export function getBearerFromRequest(headers: {
     return header[0]?.trim();
   }
   return undefined;
-}
-
-export function getClientIp(request: {
-  ip: string;
-  headers: Record<string, string | string[] | undefined>;
-}): string {
-  const forwarded = request.headers["x-forwarded-for"];
-  if (typeof forwarded === "string") {
-    const first = forwarded.split(",", 1)[0]?.trim();
-    if (first) {
-      return first;
-    }
-  }
-  if (Array.isArray(forwarded)) {
-    const first = forwarded[0]?.trim();
-    if (first) {
-      return first;
-    }
-  }
-  return request.ip;
 }

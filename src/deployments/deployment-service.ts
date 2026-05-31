@@ -3,13 +3,11 @@ import os from "node:os";
 import path from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import type { FastifyRequest } from "fastify";
-import type { MultipartFile } from "@fastify/multipart";
 
 import { parseBearerAuthorization } from "../auth/api-key.js";
 import {
   authorizeDeploymentCreate,
   getBearerFromRequest,
-  getClientIp,
   type AuthContext,
   type AuthFailure,
 } from "../auth/authorize.js";
@@ -20,7 +18,12 @@ import {
   formatWranglerFailure,
 } from "./deploy-with-local-wrangler.js";
 import { DeploymentRequestError } from "./deployment-errors.js";
-import { MaterializeError, createMaterializeState, materializeFile } from "./materialize-files.js";
+import {
+  MaterializeError,
+  createMaterializeState,
+  materializeFile,
+  type MaterializeState,
+} from "./materialize-files.js";
 import { assertSafeBranch, assertSafeProjectId as assertSafeCfProjectName } from "./safe-arg.js";
 
 const ALLOWED_FIELD_NAMES = new Set(["branch"]);
@@ -44,13 +47,16 @@ function isAuthFailure(result: AuthContext | AuthFailure): result is AuthFailure
   return "ok" in result && result.ok === false;
 }
 
-function isMultipartFile(part: unknown): part is MultipartFile {
-  return (
-    typeof part === "object" &&
-    part !== null &&
-    "type" in part &&
-    (part as MultipartFile).type === "file"
-  );
+function assertWithinAuthLimits(
+  state: MaterializeState,
+  limits: AuthContext["limits"],
+): void {
+  if (state.fileCount > limits.maxFileCount) {
+    throw new DeploymentRequestError("upload exceeds maximum file count", 400);
+  }
+  if (state.totalBytes > limits.maxUploadBytes) {
+    throw new DeploymentRequestError("upload exceeds maximum size", 400);
+  }
 }
 
 export async function handleDeployment(
@@ -78,7 +84,11 @@ export async function handleDeployment(
   let branch: string | undefined;
   const assetDir = await fs.mkdtemp(path.join(os.tmpdir(), `page-deploy-${projectId}-`));
   const state = createMaterializeState();
-  const pendingFiles: Array<{ filename: string; part: MultipartFile }> = [];
+  const parseLimits = {
+    maxFileCount: config.maxFileCount,
+    maxUploadBytes: config.maxUploadBytes,
+    maxSingleFileBytes: config.maxSingleFileBytes,
+  };
 
   try {
     const parts = request.parts();
@@ -99,7 +109,7 @@ export async function handleDeployment(
         continue;
       }
 
-      if (!isMultipartFile(part)) {
+      if (part.type !== "file") {
         continue;
       }
 
@@ -114,13 +124,23 @@ export async function handleDeployment(
         throw new DeploymentRequestError("file part requires filename", 400);
       }
 
-      pendingFiles.push({ filename, part });
+      try {
+        await materializeFile({
+          rootDir: assetDir,
+          filename,
+          stream: part.file,
+          limits: parseLimits,
+          state,
+        });
+      } catch (error) {
+        if (error instanceof MaterializeError) {
+          throw new DeploymentRequestError(error.message, 400);
+        }
+        throw error;
+      }
     }
 
     if (!branch?.trim()) {
-      for (const { part } of pendingFiles) {
-        part.file.resume();
-      }
       throw new DeploymentRequestError("branch is required", 400);
     }
     const trimmedBranch = branch.trim();
@@ -131,14 +151,11 @@ export async function handleDeployment(
       authorizationHeader: getBearerFromRequest(request.headers),
       routeProjectId: projectId,
       branch: trimmedBranch,
-      clientIp: getClientIp(request),
+      clientIp: request.ip,
       globalLimits: config,
     });
 
     if (isAuthFailure(authResult)) {
-      for (const { part } of pendingFiles) {
-        part.file.resume();
-      }
       return {
         status: "failed",
         projectId,
@@ -150,31 +167,9 @@ export async function handleDeployment(
 
     const authContext: AuthContext = authResult;
     assertSafeCfProjectName(authContext.cfProjectName);
+    assertWithinAuthLimits(state, authContext.limits);
 
-    const limits = authContext.limits;
-
-    for (const { filename, part } of pendingFiles) {
-      try {
-        await materializeFile({
-          rootDir: assetDir,
-          filename,
-          stream: part.file,
-          limits: {
-            maxFileCount: limits.maxFileCount,
-            maxUploadBytes: limits.maxUploadBytes,
-            maxSingleFileBytes: limits.maxSingleFileBytes,
-          },
-          state,
-        });
-      } catch (error) {
-        if (error instanceof MaterializeError) {
-          throw new DeploymentRequestError(error.message, 400);
-        }
-        throw error;
-      }
-    }
-
-    if (pendingFiles.length === 0 || state.fileCount === 0) {
+    if (state.fileCount === 0) {
       throw new DeploymentRequestError("at least one file is required", 400);
     }
 
