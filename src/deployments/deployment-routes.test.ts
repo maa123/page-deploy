@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
 import Fastify from "fastify";
+import multipart from "@fastify/multipart";
 
 import type { AppConfig } from "../config.js";
 import { registerDeploymentRoutes } from "./deployment-routes.js";
@@ -29,10 +30,25 @@ describe("registerDeploymentRoutes API key auth", () => {
     await Promise.all(apps.splice(0).map((app) => app.close()));
   });
 
-  it("returns 401 when x-api-key header is missing", async () => {
+  async function buildApp(): Promise<ReturnType<typeof Fastify>> {
     const app = Fastify();
-    apps.push(app);
+    await app.register(multipart, {
+      limits: {
+        fileSize: 10_485_761,
+        files: 1000,
+        fields: 4,
+        fieldSize: 256,
+        parts: 1006,
+      },
+      throwFileSizeLimit: true,
+    });
     await registerDeploymentRoutes(app, createConfig());
+    apps.push(app);
+    return app;
+  }
+
+  it("returns 401 when x-api-key header is missing", async () => {
+    const app = await buildApp();
 
     const response = await app.inject({
       method: "POST",
@@ -48,9 +64,7 @@ describe("registerDeploymentRoutes API key auth", () => {
   });
 
   it("continues request handling when x-api-key is valid", async () => {
-    const app = Fastify();
-    apps.push(app);
-    await registerDeploymentRoutes(app, createConfig());
+    const app = await buildApp();
 
     const response = await app.inject({
       method: "POST",
