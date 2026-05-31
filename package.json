@@ -9,16 +9,20 @@
   },
   "scripts": {
     "build": "tsc",
-    "start": "node dist/server.js",
-    "dev": "tsx src/server.ts",
+    "start": "node dist/main.js",
+    "dev": "tsx src/main.ts",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test src/**/*.test.ts",
     "wrangler:version": "wrangler --version"
   },
   "dependencies": {
+    "@fastify/cookie": "^11.0.0",
     "@fastify/multipart": "^9.0.0",
+    "@fastify/session": "^11.0.0",
+    "argon2": "^0.41.0",
     "fastify": "^5.0.0",
-    "wrangler": "4.93.0"
+    "wrangler": "4.93.0",
+    "zod": "^3.25.0"
   },
   "devDependencies": {
     "@types/node": "^25.9.1",

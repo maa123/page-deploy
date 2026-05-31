@@ -1,3 +1,7 @@
+import { loadTrustProxy, type TrustProxySetting } from "./http/trust-proxy.js";
+
+export type { TrustProxySetting };
+
 function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) {
@@ -26,12 +30,47 @@ export function parsePositiveInt(name: string, fallback: number): number {
   return Number(trimmed);
 }
 
+function parseBooleanEnv(name: string): boolean | undefined {
+  const raw = process.env[name]?.trim().toLowerCase();
+  if (raw === undefined || raw === "") {
+    return undefined;
+  }
+  if (raw === "true" || raw === "1" || raw === "yes") {
+    return true;
+  }
+  if (raw === "false" || raw === "0" || raw === "no") {
+    return false;
+  }
+  throw new Error(`Invalid ${name}: must be true or false`);
+}
+
+function isLoopbackHost(host: string): boolean {
+  const normalized = host.toLowerCase();
+  return normalized === "127.0.0.1" || normalized === "localhost" || normalized === "::1";
+}
+
+/** @fastify/session の cookie.maxAge はミリ秒 */
+export const ADMIN_SESSION_MAX_AGE_MS = 8 * 60 * 60 * 1000;
+
+export function resolveAdminSessionCookieSecure(adminHost: string): boolean {
+  const explicit = parseBooleanEnv("ADMIN_SESSION_SECURE");
+  if (explicit !== undefined) {
+    return explicit;
+  }
+  return !isLoopbackHost(adminHost);
+}
+
 export interface AppConfig {
   cloudflareApiToken: string;
   cloudflareAccountId: string;
-  apiKey: string;
+  sqlitePath: string;
+  trustProxy: TrustProxySetting;
   host: string;
   port: number;
+  adminHost: string;
+  adminPort: number;
+  adminSessionCookieSecure: boolean;
+  sessionSecret: string;
   maxUploadBytes: number;
   maxFileCount: number;
   maxSingleFileBytes: number;
@@ -49,12 +88,24 @@ export function loadConfig(): AppConfig {
   const maxMultipartFieldSize = parsePositiveInt("MAX_MULTIPART_FIELD_SIZE", 256);
   const maxMultipartParts = maxFileCount + maxMultipartFields + 2;
 
+  const sessionSecret = requireTrimmedEnv("SESSION_SECRET");
+  if (sessionSecret.length < 32) {
+    throw new Error("SESSION_SECRET must be at least 32 characters");
+  }
+
   return {
     cloudflareApiToken: requireEnv("CLOUDFLARE_API_TOKEN"),
     cloudflareAccountId: requireEnv("CLOUDFLARE_ACCOUNT_ID"),
-    apiKey: requireTrimmedEnv("API_KEY"),
+    sqlitePath: process.env.SQLITE_PATH?.trim() || "./data/app.db",
+    trustProxy: loadTrustProxy(),
     host: process.env.HOST ?? "0.0.0.0",
     port: parsePositiveInt("PORT", 3000),
+    adminHost: process.env.ADMIN_HOST ?? "127.0.0.1",
+    adminPort: parsePositiveInt("ADMIN_PORT", 3001),
+    adminSessionCookieSecure: resolveAdminSessionCookieSecure(
+      process.env.ADMIN_HOST ?? "127.0.0.1",
+    ),
+    sessionSecret,
     maxUploadBytes,
     maxFileCount,
     maxSingleFileBytes,

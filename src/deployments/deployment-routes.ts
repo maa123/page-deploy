@@ -1,6 +1,7 @@
-import { timingSafeEqual } from "node:crypto";
-import type { FastifyInstance, FastifyRequest } from "fastify";
+import type { DatabaseSync } from "node:sqlite";
+import type { FastifyInstance } from "fastify";
 
+import { assertValidProjectUuid } from "../auth/project-id.js";
 import type { AppConfig } from "../config.js";
 import { DeploymentRequestError } from "./deployment-errors.js";
 import { handleDeployment } from "./deployment-service.js";
@@ -45,42 +46,47 @@ function multipartLimitMessage(error: unknown): string {
   return "upload limit exceeded";
 }
 
-function getApiKeyFromHeader(request: FastifyRequest): string | undefined {
-  const header = request.headers["x-api-key"];
-  if (typeof header === "string") {
-    const firstHeaderValue = header.split(",", 1)[0];
-    return firstHeaderValue?.trim();
-  }
-  if (Array.isArray(header)) return header[0]?.trim();
-  return undefined;
-}
-
-function apiKeysMatch(expected: string, actual: string | undefined): boolean {
-  const expectedBuffer = Buffer.from(expected);
-  const actualBuffer = Buffer.from(actual ?? "");
-  const sameLength = actualBuffer.length === expectedBuffer.length;
-  const compareTarget = sameLength ? actualBuffer : expectedBuffer;
-  return timingSafeEqual(expectedBuffer, compareTarget) && sameLength;
+export interface DeploymentRouteDeps {
+  config: AppConfig;
+  db: DatabaseSync;
 }
 
 export async function registerDeploymentRoutes(
   app: FastifyInstance,
-  config: AppConfig,
+  deps: DeploymentRouteDeps,
 ): Promise<void> {
+  const { config, db } = deps;
+
   app.post<{ Params: { projectId: string } }>(
     "/v1/projects/:projectId/deployments",
     async (request, reply) => {
-      if (!apiKeysMatch(config.apiKey, getApiKeyFromHeader(request))) {
-        return reply.code(401).send({
-          status: "failed",
-          projectId: request.params.projectId,
-          errorMessage: "unauthorized",
-        });
-      }
+      const projectId = request.params.projectId;
+
       try {
-        const result = await handleDeployment(request, config);
-        const statusCode = result.status === "success" ? 200 : 502;
-        return reply.code(statusCode).send(result);
+        assertValidProjectUuid(projectId);
+      } catch (error) {
+        if (error instanceof DeploymentRequestError) {
+          return reply.code(error.statusCode).send({
+            status: "failed",
+            projectId,
+            errorMessage: error.message,
+          });
+        }
+        throw error;
+      }
+
+      try {
+        const result = await handleDeployment(request, config, db);
+        const statusCode = result.httpStatus ?? (result.status === "success" ? 200 : 502);
+        return reply.code(statusCode).send({
+          status: result.status,
+          projectId: result.projectId,
+          branch: result.branch,
+          previewUrl: result.previewUrl,
+          fileCount: result.fileCount,
+          totalBytes: result.totalBytes,
+          errorMessage: result.errorMessage,
+        });
       } catch (error) {
         if (error instanceof DeploymentRequestError) {
           return reply.code(error.statusCode).send({
