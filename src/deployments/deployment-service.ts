@@ -71,10 +71,6 @@ export async function handleDeployment(
     };
   }
 
-  if (!request.isMultipart()) {
-    throw new DeploymentRequestError("Content-Type must be multipart/form-data", 415);
-  }
-
   const preAuth = await preauthorizeDeploymentCreate({
     db,
     authorizationHeader: bearerHeader,
@@ -85,6 +81,10 @@ export async function handleDeployment(
 
   if (isAuthFailure(preAuth)) {
     return authFailureResult(projectId, "", preAuth);
+  }
+
+  if (!request.isMultipart()) {
+    throw new DeploymentRequestError("Content-Type must be multipart/form-data", 415);
   }
 
   let branch: string | undefined;

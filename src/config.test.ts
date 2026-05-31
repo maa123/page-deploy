@@ -85,6 +85,7 @@ describe("設定の読み込み", () => {
     "HOST",
     "ADMIN_HOST",
     "ADMIN_PORT",
+    "ADMIN_SESSION_SECURE",
     "MAX_UPLOAD_BYTES",
     "MAX_FILE_COUNT",
     "MAX_SINGLE_FILE_BYTES",

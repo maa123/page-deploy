@@ -109,6 +109,19 @@ describe("registerDeploymentRoutes Bearer auth", () => {
     assert.equal(response.statusCode, 401);
   });
 
+  it("returns 401 for unknown key before multipart validation", async () => {
+    const { app, projectId } = await buildAppWithKey();
+    const response = await app.inject({
+      method: "POST",
+      url: `/v1/projects/${projectId}/deployments`,
+      headers: {
+        authorization: "Bearer dep_live_unknownkey_wrongsecretvalue1234567890",
+      },
+    });
+    assert.equal(response.statusCode, 401);
+    assert.equal(response.json().errorMessage, "unauthorized");
+  });
+
   it("returns 415 when authorized but Content-Type is not multipart", async () => {
     const { app, projectId, bearer } = await buildAppWithKey();
     const response = await app.inject({
