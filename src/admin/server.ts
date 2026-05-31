@@ -4,6 +4,7 @@ import cookie from "@fastify/cookie";
 import session from "@fastify/session";
 
 import type { AppConfig } from "../config.js";
+import { ADMIN_SESSION_MAX_AGE_MS } from "../config.js";
 import { registerAdminRoutes } from "./routes.js";
 
 export async function createAdminServer(
@@ -19,7 +20,7 @@ export async function createAdminServer(
       httpOnly: true,
       sameSite: "lax",
       secure: config.adminSessionCookieSecure,
-      maxAge: 60 * 60 * 8,
+      maxAge: ADMIN_SESSION_MAX_AGE_MS,
     },
   });
 

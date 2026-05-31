@@ -58,7 +58,7 @@ function isExpired(expiresAt: string | null): boolean {
 }
 
 function isBranchAllowed(branch: string, allowedBranches: string[] | null): boolean {
-  if (allowedBranches === null || allowedBranches.length === 0) {
+  if (allowedBranches === null) {
     return true;
   }
   return allowedBranches.includes(branch);

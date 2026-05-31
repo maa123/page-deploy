@@ -45,6 +45,9 @@ function isLoopbackHost(host: string): boolean {
   return normalized === "127.0.0.1" || normalized === "localhost" || normalized === "::1";
 }
 
+/** @fastify/session の cookie.maxAge はミリ秒 */
+export const ADMIN_SESSION_MAX_AGE_MS = 8 * 60 * 60 * 1000;
+
 export function resolveAdminSessionCookieSecure(adminHost: string): boolean {
   const explicit = parseBooleanEnv("ADMIN_SESSION_SECURE");
   if (explicit !== undefined) {

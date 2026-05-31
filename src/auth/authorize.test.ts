@@ -138,6 +138,52 @@ describe("authorizeDeploymentCreate", () => {
     }
   });
 
+  it("returns 403 when allowed_branches is an empty array", async () => {
+    const { db, projectId, bearer, branch } = await seedProjectWithKey({
+      allowedBranches: [],
+    });
+    const result = await authorizeDeploymentCreate({
+      db,
+      authorizationHeader: bearer,
+      routeProjectId: projectId,
+      branch,
+      clientIp: "127.0.0.1",
+      globalLimits: {
+        maxUploadBytes: 1000,
+        maxFileCount: 10,
+        maxSingleFileBytes: 500,
+      },
+    });
+    assert.equal(isAuthFailure(result), true);
+    if (isAuthFailure(result)) {
+      assert.equal(result.statusCode, 403);
+    }
+  });
+
+  it("returns 403 when allowed_ip_cidrs is an empty array", async () => {
+    const { db, projectId, bearer, branch } = await seedProjectWithKey();
+    db.prepare(`UPDATE api_keys SET allowed_ip_cidrs = ? WHERE key_id = ?`).run(
+      "[]",
+      "testkeyid01",
+    );
+    const result = await authorizeDeploymentCreate({
+      db,
+      authorizationHeader: bearer,
+      routeProjectId: projectId,
+      branch,
+      clientIp: "127.0.0.1",
+      globalLimits: {
+        maxUploadBytes: 1000,
+        maxFileCount: 10,
+        maxSingleFileBytes: 500,
+      },
+    });
+    assert.equal(isAuthFailure(result), true);
+    if (isAuthFailure(result)) {
+      assert.equal(result.statusCode, 403);
+    }
+  });
+
   it("returns 403 for disallowed branch", async () => {
     const { db, projectId, bearer } = await seedProjectWithKey({
       allowedBranches: ["staging"],

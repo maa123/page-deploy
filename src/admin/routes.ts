@@ -4,6 +4,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 
 import { generateApiKey, hashSecret, verifyPassword } from "../auth/api-key.js";
+import { isValidAllowedIpCidrEntry } from "../auth/ip-cidr.js";
 import { DEFAULT_DEPLOY_PERMISSIONS } from "../auth/permissions.js";
 import type { AppConfig } from "../config.js";
 import {
@@ -45,7 +46,12 @@ const createApiKeySchema = z.object({
   allowedBranches: z.array(z.string().min(1).max(256)).optional(),
   maxUploadBytes: z.number().int().positive().optional(),
   maxFileCount: z.number().int().positive().optional(),
-  allowedIpCidrs: z.array(z.string().min(1)).optional(),
+  allowedIpCidrs: z
+    .array(z.string().min(1).max(128))
+    .refine((entries) => entries.every(isValidAllowedIpCidrEntry), {
+      message: "allowedIpCidrs must contain valid IPv4/IPv6 addresses or CIDR ranges",
+    })
+    .optional(),
   expiresAt: z.string().datetime().optional(),
 });
 
