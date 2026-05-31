@@ -100,4 +100,23 @@ describe("registerDeploymentRoutes API key auth", () => {
       errorMessage: "Content-Type must be multipart/form-data",
     });
   });
+
+  it("uses the first x-api-key value when header is repeated", async () => {
+    const app = await buildApp();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/projects/test/deployments",
+      headers: {
+        "x-api-key": ["expected-api-key", "ignored-api-key"],
+      },
+    });
+
+    assert.equal(response.statusCode, 415);
+    assert.deepEqual(response.json(), {
+      status: "failed",
+      projectId: "test",
+      errorMessage: "Content-Type must be multipart/form-data",
+    });
+  });
 });

@@ -47,17 +47,17 @@ function multipartLimitMessage(error: unknown): string {
 
 function getApiKeyFromHeader(request: FastifyRequest): string | undefined {
   const header = request.headers["x-api-key"];
-  if (typeof header === "string") return header;
+  if (typeof header === "string") {
+    const firstHeaderValue = header.split(",", 1)[0];
+    return firstHeaderValue?.trim();
+  }
   if (Array.isArray(header)) return header[0];
   return undefined;
 }
 
 function apiKeysMatch(expected: string, actual: string | undefined): boolean {
-  if (actual === undefined) {
-    return false;
-  }
   const expectedBuffer = Buffer.from(expected);
-  const actualBuffer = Buffer.from(actual);
+  const actualBuffer = Buffer.from(actual ?? "");
   const paddedActual = Buffer.alloc(expectedBuffer.length);
   actualBuffer.copy(paddedActual, 0, 0, Math.min(actualBuffer.length, expectedBuffer.length));
   return timingSafeEqual(expectedBuffer, paddedActual) && actualBuffer.length === expectedBuffer.length;

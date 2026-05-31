@@ -141,6 +141,21 @@ describe("設定の読み込み", () => {
     assert.throws(() => loadConfig(), /Missing API_KEY/);
   });
 
+  it("throws when API_KEY is whitespace only", () => {
+    process.env.CLOUDFLARE_API_TOKEN = "test-token";
+    process.env.CLOUDFLARE_ACCOUNT_ID = "test-account";
+    process.env.API_KEY = "   ";
+    assert.throws(() => loadConfig(), /Missing API_KEY/);
+  });
+
+  it("trims surrounding whitespace from API_KEY", () => {
+    process.env.CLOUDFLARE_API_TOKEN = "test-token";
+    process.env.CLOUDFLARE_ACCOUNT_ID = "test-account";
+    process.env.API_KEY = "  test-api-key  ";
+    const config = loadConfig();
+    assert.equal(config.apiKey, "test-api-key");
+  });
+
   it("bodyLimitBytes をアップロード上限とフィールド上限の合計として計算する", () => {
     process.env.CLOUDFLARE_API_TOKEN = "test-token";
     process.env.CLOUDFLARE_ACCOUNT_ID = "test-account";
