@@ -1,19 +1,19 @@
+import type { DatabaseSync } from "node:sqlite";
 import Fastify from "fastify";
 import multipart from "@fastify/multipart";
 
-import { loadConfig } from "./config.js";
+import type { AppConfig } from "./config.js";
 import { registerDeploymentRoutes } from "./deployments/deployment-routes.js";
 
-async function main(): Promise<void> {
-  const config = loadConfig();
-
+export async function createApiServer(
+  config: AppConfig,
+  db: DatabaseSync,
+): Promise<ReturnType<typeof Fastify>> {
   const app = Fastify({
     logger: true,
     bodyLimit: config.bodyLimitBytes,
   });
 
-  // パーサ上限はサービス上限より大きくする。サイズ超過が途中で切り捨てられて
-  // デプロイされないよう、materializeFile で 400 にする。
   await app.register(multipart, {
     throwFileSizeLimit: true,
     limits: {
@@ -27,13 +27,16 @@ async function main(): Promise<void> {
 
   app.get("/health", async () => ({ ok: true }));
 
-  await registerDeploymentRoutes(app, config);
+  await registerDeploymentRoutes(app, { config, db });
 
-  await app.listen({ host: config.host, port: config.port });
+  return app;
 }
 
-main().catch((error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error);
-  process.stderr.write(`Error: ${message}\n`);
-  process.exit(1);
-});
+export async function startApiServer(
+  config: AppConfig,
+  db: DatabaseSync,
+): Promise<ReturnType<typeof Fastify>> {
+  const app = await createApiServer(config, db);
+  await app.listen({ host: config.host, port: config.port });
+  return app;
+}

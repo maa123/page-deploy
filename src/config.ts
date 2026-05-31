@@ -29,9 +29,12 @@ export function parsePositiveInt(name: string, fallback: number): number {
 export interface AppConfig {
   cloudflareApiToken: string;
   cloudflareAccountId: string;
-  apiKey: string;
+  sqlitePath: string;
   host: string;
   port: number;
+  adminHost: string;
+  adminPort: number;
+  sessionSecret: string;
   maxUploadBytes: number;
   maxFileCount: number;
   maxSingleFileBytes: number;
@@ -49,12 +52,20 @@ export function loadConfig(): AppConfig {
   const maxMultipartFieldSize = parsePositiveInt("MAX_MULTIPART_FIELD_SIZE", 256);
   const maxMultipartParts = maxFileCount + maxMultipartFields + 2;
 
+  const sessionSecret = requireTrimmedEnv("SESSION_SECRET");
+  if (sessionSecret.length < 32) {
+    throw new Error("SESSION_SECRET must be at least 32 characters");
+  }
+
   return {
     cloudflareApiToken: requireEnv("CLOUDFLARE_API_TOKEN"),
     cloudflareAccountId: requireEnv("CLOUDFLARE_ACCOUNT_ID"),
-    apiKey: requireTrimmedEnv("API_KEY"),
+    sqlitePath: process.env.SQLITE_PATH?.trim() || "./data/app.db",
     host: process.env.HOST ?? "0.0.0.0",
     port: parsePositiveInt("PORT", 3000),
+    adminHost: process.env.ADMIN_HOST ?? "127.0.0.1",
+    adminPort: parsePositiveInt("ADMIN_PORT", 3001),
+    sessionSecret,
     maxUploadBytes,
     maxFileCount,
     maxSingleFileBytes,
