@@ -24,6 +24,17 @@ export interface AuthContext {
   };
 }
 
+/** branch 検証前に確定する認証情報（ファイル受信前に検証） */
+export interface PreAuthContext {
+  apiKeyId: string;
+  projectId: string;
+  cfAccountId: string;
+  cfProjectName: string;
+  permissions: string[];
+  limits: AuthContext["limits"];
+  allowedBranches: string[] | null;
+}
+
 export interface AuthFailure {
   ok: false;
   statusCode: 401 | 403;
@@ -31,8 +42,11 @@ export interface AuthFailure {
 }
 
 export type AuthorizeResult = AuthContext | AuthFailure;
+export type PreAuthorizeResult = PreAuthContext | AuthFailure;
 
-export function isAuthFailure(result: AuthorizeResult): result is AuthFailure {
+export function isAuthFailure(
+  result: AuthorizeResult | PreAuthorizeResult,
+): result is AuthFailure {
   return "ok" in result && result.ok === false;
 }
 
@@ -50,17 +64,16 @@ function isBranchAllowed(branch: string, allowedBranches: string[] | null): bool
   return allowedBranches.includes(branch);
 }
 
-export async function authorizeDeploymentCreate(input: {
+export async function preauthorizeDeploymentCreate(input: {
   db: DatabaseSync;
   authorizationHeader: string | undefined;
   routeProjectId: string;
-  branch: string;
   clientIp: string;
   globalLimits: Pick<
     AppConfig,
     "maxUploadBytes" | "maxFileCount" | "maxSingleFileBytes"
   >;
-}): Promise<AuthorizeResult> {
+}): Promise<PreAuthorizeResult> {
   const parsed = parseBearerAuthorization(input.authorizationHeader);
   if (!parsed) {
     return { ok: false, statusCode: 401, message: "unauthorized" };
@@ -89,9 +102,6 @@ export async function authorizeDeploymentCreate(input: {
   if (allowedBranches === undefined) {
     return { ok: false, statusCode: 403, message: "forbidden" };
   }
-  if (!isBranchAllowed(input.branch, allowedBranches)) {
-    return { ok: false, statusCode: 403, message: "forbidden" };
-  }
 
   const allowedIpCidrs = parseOptionalJsonStringArray(apiKey.allowed_ip_cidrs);
   if (allowedIpCidrs === undefined) {
@@ -112,12 +122,49 @@ export async function authorizeDeploymentCreate(input: {
     cfAccountId: project.cf_account_id,
     cfProjectName: project.cf_project_name,
     permissions,
+    allowedBranches,
     limits: {
       maxUploadBytes: apiKey.max_upload_bytes ?? input.globalLimits.maxUploadBytes,
       maxFileCount: apiKey.max_file_count ?? input.globalLimits.maxFileCount,
       maxSingleFileBytes: input.globalLimits.maxSingleFileBytes,
     },
   };
+}
+
+export function authorizeDeploymentBranch(
+  preAuth: PreAuthContext,
+  branch: string,
+): AuthorizeResult {
+  if (!isBranchAllowed(branch, preAuth.allowedBranches)) {
+    return { ok: false, statusCode: 403, message: "forbidden" };
+  }
+
+  return {
+    apiKeyId: preAuth.apiKeyId,
+    projectId: preAuth.projectId,
+    cfAccountId: preAuth.cfAccountId,
+    cfProjectName: preAuth.cfProjectName,
+    permissions: preAuth.permissions,
+    limits: preAuth.limits,
+  };
+}
+
+export async function authorizeDeploymentCreate(input: {
+  db: DatabaseSync;
+  authorizationHeader: string | undefined;
+  routeProjectId: string;
+  branch: string;
+  clientIp: string;
+  globalLimits: Pick<
+    AppConfig,
+    "maxUploadBytes" | "maxFileCount" | "maxSingleFileBytes"
+  >;
+}): Promise<AuthorizeResult> {
+  const preAuth = await preauthorizeDeploymentCreate(input);
+  if (isAuthFailure(preAuth)) {
+    return preAuth;
+  }
+  return authorizeDeploymentBranch(preAuth, input.branch);
 }
 
 export function getBearerFromRequest(headers: {

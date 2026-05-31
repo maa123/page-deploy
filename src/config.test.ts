@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
 
-import { loadConfig, parsePositiveInt } from "./config.js";
+import { loadConfig, parsePositiveInt, resolveAdminSessionCookieSecure } from "./config.js";
 
 describe("正の整数のパース", () => {
   const original = process.env.TEST_PORT;
@@ -150,6 +150,11 @@ describe("設定の読み込み", () => {
     setRequiredEnv();
     process.env.SESSION_SECRET = "short";
     assert.throws(() => loadConfig(), /SESSION_SECRET must be at least 32/);
+  });
+
+  it("ADMIN_SESSION_SECURE 未設定時はループバック以外で Secure を有効にする", () => {
+    assert.equal(resolveAdminSessionCookieSecure("127.0.0.1"), false);
+    assert.equal(resolveAdminSessionCookieSecure("0.0.0.0"), true);
   });
 
   it("bodyLimitBytes をアップロード上限とフィールド上限の合計として計算する", () => {

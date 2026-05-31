@@ -27,6 +27,7 @@ pnpm dev
 
 - 公開 API: `PORT`（既定 `3000`）
 - 管理 API: `ADMIN_PORT`（既定 `3001`、`ADMIN_HOST` でバインド）
+- 管理セッション Cookie の `Secure` フラグ: `ADMIN_SESSION_SECURE`（未設定時は `ADMIN_HOST` がループバック以外なら有効）
 
 ## 管理 API（別ポート）
 
@@ -73,8 +74,10 @@ Content-Type: multipart/form-data
 
 | フィールド | 内容 |
 |-----------|------|
-| `branch` | デプロイ先ブランチ（wrangler `--branch` に渡す） |
+| `branch` | デプロイ先ブランチ（wrangler `--branch` に渡す）。**`file` より前に送ること** |
 | `file` | 繰り返し可。各パートの `filename` にサイト内の相対パスを指定 |
+
+認証は multipart 本文の解析前に行われ、ファイルは API Key ごとのサイズ上限で書き込まれます。
 
 `:projectId` は管理 API で作成したプロジェクトの UUID です。wrangler の `--project-name` には DB に登録した `cfProjectName` が使われます。
 

@@ -12,8 +12,14 @@ import {
   listApiKeysByProject,
   revokeApiKey,
 } from "../db/repositories/api-keys.js";
-import { findProjectById, insertProject, listProjects } from "../db/repositories/projects.js";
+import {
+  findProjectById,
+  findProjectBySlug,
+  insertProject,
+  listProjects,
+} from "../db/repositories/projects.js";
 import { parseJsonStringArray } from "../db/json-columns.js";
+import { isSqliteUniqueConstraint } from "../db/sqlite-errors.js";
 import type { ApiKeyPublicRow } from "../db/repositories/api-keys.js";
 import { findAdminByUsername } from "../db/repositories/admin-users.js";
 import { requireAdminSession } from "./session.js";
@@ -124,16 +130,27 @@ export async function registerAdminRoutes(
       return reply.code(400).send({ error: "invalid request", details: parsed.error.flatten() });
     }
 
+    if (findProjectBySlug(db, parsed.data.slug)) {
+      return reply.code(409).send({ error: "project slug already exists" });
+    }
+
     const id = randomUUID();
     const createdAt = new Date().toISOString();
-    insertProject(db, {
-      id,
-      slug: parsed.data.slug,
-      cfAccountId: parsed.data.cfAccountId,
-      cfProjectName: parsed.data.cfProjectName,
-      productionBranch: parsed.data.productionBranch,
-      createdAt,
-    });
+    try {
+      insertProject(db, {
+        id,
+        slug: parsed.data.slug,
+        cfAccountId: parsed.data.cfAccountId,
+        cfProjectName: parsed.data.cfProjectName,
+        productionBranch: parsed.data.productionBranch,
+        createdAt,
+      });
+    } catch (error) {
+      if (isSqliteUniqueConstraint(error)) {
+        return reply.code(409).send({ error: "project slug already exists" });
+      }
+      throw error;
+    }
 
     return reply.code(201).send({
       id,

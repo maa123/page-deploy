@@ -22,6 +22,15 @@ export function findProjectById(db: DatabaseSync, id: string): ProjectRow | unde
   return parseProjectRow(stmt.get(id));
 }
 
+export function findProjectBySlug(db: DatabaseSync, slug: string): ProjectRow | undefined {
+  const stmt = db.prepare(`
+    SELECT id, slug, cf_account_id, cf_project_name, production_branch, status, created_at
+    FROM projects
+    WHERE slug = ?
+  `);
+  return parseProjectRow(stmt.get(slug));
+}
+
 export function listProjects(db: DatabaseSync): ProjectRow[] {
   const stmt = db.prepare(`
     SELECT id, slug, cf_account_id, cf_project_name, production_branch, status, created_at

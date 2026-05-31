@@ -19,6 +19,7 @@ function createConfig(): AppConfig {
     port: 3000,
     adminHost: "127.0.0.1",
     adminPort: 3001,
+    adminSessionCookieSecure: false,
     sessionSecret: "x".repeat(32),
     maxUploadBytes: 52_428_800,
     maxFileCount: 1000,
@@ -97,5 +98,40 @@ describe("admin routes", () => {
       .parse(createKey.json());
     assert.match(body.apiKey.plaintext, /^dep_live_/);
     assert.ok(body.apiKey.keyId);
+  });
+
+  it("returns 409 when project slug already exists", async () => {
+    const app = await buildApp();
+
+    const login = await app.inject({
+      method: "POST",
+      url: "/admin/login",
+      payload: { username: "admin", password: "admin-password-12345" },
+    });
+    const cookieHeader = login.headers["set-cookie"];
+    assert.ok(cookieHeader);
+
+    const payload = {
+      slug: "duplicate-slug",
+      cfAccountId: "cf-account",
+      cfProjectName: "my-pages-site",
+    };
+
+    const first = await app.inject({
+      method: "POST",
+      url: "/admin/projects",
+      headers: { cookie: String(cookieHeader) },
+      payload,
+    });
+    assert.equal(first.statusCode, 201);
+
+    const second = await app.inject({
+      method: "POST",
+      url: "/admin/projects",
+      headers: { cookie: String(cookieHeader) },
+      payload,
+    });
+    assert.equal(second.statusCode, 409);
+    assert.equal(second.json().error, "project slug already exists");
   });
 });

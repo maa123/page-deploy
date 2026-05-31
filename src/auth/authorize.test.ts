@@ -3,7 +3,11 @@ import { randomUUID } from "node:crypto";
 import { describe, it } from "node:test";
 
 import { hashSecret } from "./api-key.js";
-import { authorizeDeploymentCreate, isAuthFailure } from "./authorize.js";
+import {
+  authorizeDeploymentCreate,
+  isAuthFailure,
+  preauthorizeDeploymentCreate,
+} from "./authorize.js";
 import { PERMISSION_DEPLOYMENT_CREATE } from "./permissions.js";
 import { openMemoryDatabase } from "../db/database.js";
 import { insertApiKey, revokeApiKey } from "../db/repositories/api-keys.js";
@@ -50,6 +54,27 @@ async function seedProjectWithKey(options?: {
     branch: "main",
   };
 }
+
+describe("preauthorizeDeploymentCreate", () => {
+  it("returns 403 for project mismatch before branch is known", async () => {
+    const { db, bearer } = await seedProjectWithKey();
+    const result = await preauthorizeDeploymentCreate({
+      db,
+      authorizationHeader: bearer,
+      routeProjectId: randomUUID(),
+      clientIp: "127.0.0.1",
+      globalLimits: {
+        maxUploadBytes: 1000,
+        maxFileCount: 10,
+        maxSingleFileBytes: 500,
+      },
+    });
+    assert.equal(isAuthFailure(result), true);
+    if (isAuthFailure(result)) {
+      assert.equal(result.statusCode, 403);
+    }
+  });
+});
 
 describe("authorizeDeploymentCreate", () => {
   it("returns auth context for valid key", async () => {

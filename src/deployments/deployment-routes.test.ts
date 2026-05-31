@@ -21,6 +21,7 @@ function createConfig(): AppConfig {
     port: 3000,
     adminHost: "127.0.0.1",
     adminPort: 3001,
+    adminSessionCookieSecure: false,
     sessionSecret: "x".repeat(32),
     maxUploadBytes: 52_428_800,
     maxFileCount: 1000,

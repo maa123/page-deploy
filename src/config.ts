@@ -26,6 +26,33 @@ export function parsePositiveInt(name: string, fallback: number): number {
   return Number(trimmed);
 }
 
+function parseBooleanEnv(name: string): boolean | undefined {
+  const raw = process.env[name]?.trim().toLowerCase();
+  if (raw === undefined || raw === "") {
+    return undefined;
+  }
+  if (raw === "true" || raw === "1" || raw === "yes") {
+    return true;
+  }
+  if (raw === "false" || raw === "0" || raw === "no") {
+    return false;
+  }
+  throw new Error(`Invalid ${name}: must be true or false`);
+}
+
+function isLoopbackHost(host: string): boolean {
+  const normalized = host.toLowerCase();
+  return normalized === "127.0.0.1" || normalized === "localhost" || normalized === "::1";
+}
+
+export function resolveAdminSessionCookieSecure(adminHost: string): boolean {
+  const explicit = parseBooleanEnv("ADMIN_SESSION_SECURE");
+  if (explicit !== undefined) {
+    return explicit;
+  }
+  return !isLoopbackHost(adminHost);
+}
+
 export interface AppConfig {
   cloudflareApiToken: string;
   cloudflareAccountId: string;
@@ -34,6 +61,7 @@ export interface AppConfig {
   port: number;
   adminHost: string;
   adminPort: number;
+  adminSessionCookieSecure: boolean;
   sessionSecret: string;
   maxUploadBytes: number;
   maxFileCount: number;
@@ -65,6 +93,9 @@ export function loadConfig(): AppConfig {
     port: parsePositiveInt("PORT", 3000),
     adminHost: process.env.ADMIN_HOST ?? "127.0.0.1",
     adminPort: parsePositiveInt("ADMIN_PORT", 3001),
+    adminSessionCookieSecure: resolveAdminSessionCookieSecure(
+      process.env.ADMIN_HOST ?? "127.0.0.1",
+    ),
     sessionSecret,
     maxUploadBytes,
     maxFileCount,

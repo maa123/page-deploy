@@ -18,7 +18,7 @@ export async function createAdminServer(
     cookie: {
       httpOnly: true,
       sameSite: "lax",
-      secure: false,
+      secure: config.adminSessionCookieSecure,
       maxAge: 60 * 60 * 8,
     },
   });
