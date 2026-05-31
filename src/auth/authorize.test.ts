@@ -5,6 +5,7 @@ import { describe, it } from "node:test";
 import { hashSecret } from "./api-key.js";
 import {
   authorizeDeploymentCreate,
+  isApiKeyExpired,
   isAuthFailure,
   preauthorizeDeploymentCreate,
 } from "./authorize.js";
@@ -54,6 +55,20 @@ async function seedProjectWithKey(options?: {
     branch: "main",
   };
 }
+
+describe("isApiKeyExpired", () => {
+  it("treats malformed expires_at as expired", () => {
+    assert.equal(isApiKeyExpired("not-a-date"), true);
+  });
+
+  it("returns false when expires_at is null", () => {
+    assert.equal(isApiKeyExpired(null), false);
+  });
+
+  it("returns true when expires_at is in the past", () => {
+    assert.equal(isApiKeyExpired("2000-01-01T00:00:00.000Z"), true);
+  });
+});
 
 describe("preauthorizeDeploymentCreate", () => {
   it("returns 403 for project mismatch before branch is known", async () => {
@@ -203,6 +218,30 @@ describe("authorizeDeploymentCreate", () => {
     assert.equal(isAuthFailure(result), true);
     if (isAuthFailure(result)) {
       assert.equal(result.statusCode, 403);
+    }
+  });
+
+  it("returns 401 when expires_at is malformed", async () => {
+    const { db, projectId, bearer, branch } = await seedProjectWithKey();
+    db.prepare(`UPDATE api_keys SET expires_at = ? WHERE key_id = ?`).run(
+      "not-a-valid-datetime",
+      "testkeyid01",
+    );
+    const result = await authorizeDeploymentCreate({
+      db,
+      authorizationHeader: bearer,
+      routeProjectId: projectId,
+      branch,
+      clientIp: "127.0.0.1",
+      globalLimits: {
+        maxUploadBytes: 1000,
+        maxFileCount: 10,
+        maxSingleFileBytes: 500,
+      },
+    });
+    assert.equal(isAuthFailure(result), true);
+    if (isAuthFailure(result)) {
+      assert.equal(result.statusCode, 401);
     }
   });
 

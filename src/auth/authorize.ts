@@ -50,11 +50,16 @@ export function isAuthFailure(
   return "ok" in result && result.ok === false;
 }
 
-function isExpired(expiresAt: string | null): boolean {
+/** 不正な日時は失効扱い（fail-closed） */
+export function isApiKeyExpired(expiresAt: string | null): boolean {
   if (!expiresAt) {
     return false;
   }
-  return Date.parse(expiresAt) <= Date.now();
+  const timestamp = Date.parse(expiresAt);
+  if (Number.isNaN(timestamp)) {
+    return true;
+  }
+  return timestamp <= Date.now();
 }
 
 function isBranchAllowed(branch: string, allowedBranches: string[] | null): boolean {
@@ -80,7 +85,7 @@ export async function preauthorizeDeploymentCreate(input: {
   }
 
   const apiKey = findApiKeyByKeyId(input.db, parsed.keyId);
-  if (!apiKey || apiKey.revoked_at || isExpired(apiKey.expires_at)) {
+  if (!apiKey || apiKey.revoked_at || isApiKeyExpired(apiKey.expires_at)) {
     return { ok: false, statusCode: 401, message: "unauthorized" };
   }
 

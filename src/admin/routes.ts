@@ -40,20 +40,36 @@ const createProjectSchema = z.object({
   productionBranch: z.string().min(1).max(256).optional(),
 });
 
-const createApiKeySchema = z.object({
-  name: z.string().min(1).max(128).optional(),
-  permissions: z.array(z.string().min(1)).optional(),
-  allowedBranches: z.array(z.string().min(1).max(256)).optional(),
-  maxUploadBytes: z.number().int().positive().optional(),
-  maxFileCount: z.number().int().positive().optional(),
-  allowedIpCidrs: z
-    .array(z.string().min(1).max(128))
-    .refine((entries) => entries.every(isValidAllowedIpCidrEntry), {
-      message: "allowedIpCidrs must contain valid IPv4/IPv6 addresses or CIDR ranges",
-    })
-    .optional(),
-  expiresAt: z.string().datetime().optional(),
-});
+function createApiKeySchema(config: AppConfig) {
+  return z.object({
+    name: z.string().min(1).max(128).optional(),
+    permissions: z.array(z.string().min(1)).optional(),
+    allowedBranches: z.array(z.string().min(1).max(256)).optional(),
+    maxUploadBytes: z
+      .number()
+      .int()
+      .positive()
+      .max(config.maxUploadBytes, {
+        message: `maxUploadBytes cannot exceed server limit (${config.maxUploadBytes})`,
+      })
+      .optional(),
+    maxFileCount: z
+      .number()
+      .int()
+      .positive()
+      .max(config.maxFileCount, {
+        message: `maxFileCount cannot exceed server limit (${config.maxFileCount})`,
+      })
+      .optional(),
+    allowedIpCidrs: z
+      .array(z.string().min(1).max(128))
+      .refine((entries) => entries.every(isValidAllowedIpCidrEntry), {
+        message: "allowedIpCidrs must contain valid IPv4/IPv6 addresses or CIDR ranges",
+      })
+      .optional(),
+    expiresAt: z.string().datetime().optional(),
+  });
+}
 
 const loginSchema = z.object({
   username: z.string().min(1).max(64),
@@ -80,7 +96,7 @@ function toApiKeyResponse(row: ApiKeyPublicRow) {
 export async function registerAdminRoutes(
   app: FastifyInstance,
   db: DatabaseSync,
-  _config: AppConfig,
+  config: AppConfig,
 ): Promise<void> {
   app.post("/admin/login", async (request, reply) => {
     const parsed = loginSchema.safeParse(request.body);
@@ -190,7 +206,7 @@ export async function registerAdminRoutes(
       return reply.code(404).send({ error: "project not found" });
     }
 
-    const parsed = createApiKeySchema.safeParse(request.body ?? {});
+    const parsed = createApiKeySchema(config).safeParse(request.body ?? {});
     if (!parsed.success) {
       return reply.code(400).send({ error: "invalid request", details: parsed.error.flatten() });
     }

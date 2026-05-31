@@ -166,4 +166,36 @@ describe("admin routes", () => {
     });
     assert.equal(createKey.statusCode, 400);
   });
+
+  it("returns 400 when maxUploadBytes exceeds server limit", async () => {
+    const app = await buildApp();
+
+    const login = await app.inject({
+      method: "POST",
+      url: "/admin/login",
+      payload: { username: "admin", password: "admin-password-12345" },
+    });
+    const cookieHeader = login.headers["set-cookie"];
+    assert.ok(cookieHeader);
+
+    const createProject = await app.inject({
+      method: "POST",
+      url: "/admin/projects",
+      headers: { cookie: String(cookieHeader) },
+      payload: {
+        slug: "limit-test-site",
+        cfAccountId: "cf-account",
+        cfProjectName: "my-pages-site",
+      },
+    });
+    const projectId = z.object({ id: z.string().uuid() }).parse(createProject.json()).id;
+
+    const createKey = await app.inject({
+      method: "POST",
+      url: `/admin/projects/${projectId}/api-keys`,
+      headers: { cookie: String(cookieHeader) },
+      payload: { maxUploadBytes: 99_999_999_999 },
+    });
+    assert.equal(createKey.statusCode, 400);
+  });
 });

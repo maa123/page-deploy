@@ -62,7 +62,7 @@ curl -b cookies.txt -X POST "http://127.0.0.1:3001/admin/projects/<project-uuid>
   -d '{"name":"ci-deploy"}'
 ```
 
-レスポンスの `apiKey.plaintext` は **一度だけ** 表示されます。以降は再取得できません。
+レスポンスの `apiKey.plaintext` は 一度だけ 表示されます。以降は再取得できません。
 
 ## デプロイ API
 
@@ -74,7 +74,7 @@ Content-Type: multipart/form-data
 
 | フィールド | 内容 |
 |-----------|------|
-| `branch` | デプロイ先ブランチ（wrangler `--branch` に渡す）。**`file` より前に送ること** |
+| `branch` | デプロイ先ブランチ（wrangler `--branch` に渡す）。`file` より前に送ること |
 | `file` | 繰り返し可。各パートの `filename` にサイト内の相対パスを指定 |
 
 認証は multipart 本文の解析前に行われ、ファイルは API Key ごとのサイズ上限で書き込まれます。
@@ -83,7 +83,7 @@ Content-Type: multipart/form-data
 
 ### アップロード上限
 
-グローバル既定は環境変数で設定します。API Key ごとに `maxUploadBytes` / `maxFileCount` を上書きできます。
+グローバル既定は環境変数で設定します。API Key ごとの `maxUploadBytes` / `maxFileCount` は サーバー上限以下 にのみ設定できます（グローバルより厳しくする用途）。
 
 | 変数 | 既定 | 内容 |
 |------|------|------|
