@@ -8,8 +8,8 @@ import {
   PathValidationError,
 } from "./path-validation.js";
 
-describe("isWindowsReservedPathSegment", () => {
-  it("returns true for reserved device names", () => {
+describe("Windows 予約パスセグメントの判定", () => {
+  it("予約デバイス名のとき true を返す", () => {
     assert.equal(isWindowsReservedPathSegment("CON"), true);
     assert.equal(isWindowsReservedPathSegment("PRN"), true);
     assert.equal(isWindowsReservedPathSegment("AUX"), true);
@@ -18,82 +18,82 @@ describe("isWindowsReservedPathSegment", () => {
     assert.equal(isWindowsReservedPathSegment("LPT9"), true);
   });
 
-  it("is case-insensitive", () => {
+  it("大文字小文字を区別しない", () => {
     assert.equal(isWindowsReservedPathSegment("con"), true);
     assert.equal(isWindowsReservedPathSegment("Nul"), true);
     assert.equal(isWindowsReservedPathSegment("com1"), true);
   });
 
-  it("returns true for reserved names with extensions", () => {
+  it("拡張子付きの予約名のとき true を返す", () => {
     assert.equal(isWindowsReservedPathSegment("CON.txt"), true);
     assert.equal(isWindowsReservedPathSegment("NUL.log"), true);
   });
 
-  it("returns false for normal path segments", () => {
+  it("通常のパスセグメントのとき false を返す", () => {
     assert.equal(isWindowsReservedPathSegment("index.html"), false);
     assert.equal(isWindowsReservedPathSegment("app.js"), false);
     assert.equal(isWindowsReservedPathSegment("console.log"), false);
   });
 });
 
-describe("normalizeRelativePath", () => {
-  it("normalizes nested paths", () => {
+describe("相対パスの正規化", () => {
+  it("ネストしたパスを正規化する", () => {
     assert.equal(normalizeRelativePath("assets\\app.js"), "assets/app.js");
     assert.equal(normalizeRelativePath("./index.html"), "index.html");
   });
 
-  it("rejects reserved Windows device names with extensions", () => {
+  it("拡張子付きの Windows 予約デバイス名を拒否する", () => {
     assert.throws(() => normalizeRelativePath("CON.txt"), PathValidationError);
     assert.throws(() => normalizeRelativePath("assets/COM1.js"), PathValidationError);
     assert.equal(isWindowsReservedPathSegment("CON.txt"), true);
     assert.equal(isWindowsReservedPathSegment("index.html"), false);
   });
 
-  it("rejects traversal and absolute paths", () => {
+  it("トラバーサルと絶対パスを拒否する", () => {
     assert.throws(() => normalizeRelativePath("../secret.txt"), PathValidationError);
     assert.throws(() => normalizeRelativePath("/etc/passwd"), PathValidationError);
     assert.throws(() => normalizeRelativePath("C:\\windows\\system32"), PathValidationError);
     assert.throws(() => normalizeRelativePath(""), PathValidationError);
   });
 
-  it("rejects filenames containing null bytes", () => {
+  it("ヌルバイトを含むファイル名を拒否する", () => {
     assert.throws(() => normalizeRelativePath("evil\x00file"), PathValidationError);
   });
 
-  it("rejects whitespace-only filenames", () => {
+  it("空白のみのファイル名を拒否する", () => {
     assert.throws(() => normalizeRelativePath("   "), PathValidationError);
   });
 
-  it("rejects paths that normalize to the current directory", () => {
+  it("正規化結果がカレントディレクトリになるパスを拒否する", () => {
     assert.throws(() => normalizeRelativePath("."), PathValidationError);
   });
 
-  it("normalizes paths with a leading ./", () => {
+  it("先頭が ./ のパスを正規化する", () => {
     assert.equal(normalizeRelativePath("./assets/style.css"), "assets/style.css");
   });
 
-  it("accepts deeply nested valid paths", () => {
+  it("深くネストした有効なパスを受け入れる", () => {
     assert.equal(normalizeRelativePath("a/b/c/index.html"), "a/b/c/index.html");
   });
 });
 
-describe("assertPathWithinRoot", () => {
-  it("accepts a file directly in the root", () => {
+describe("ルート内パスの検証", () => {
+  it("ルート直下のファイルを受け入れる", () => {
     assert.doesNotThrow(() => assertPathWithinRoot("/tmp/root", "index.html"));
   });
 
-  it("accepts a nested file within the root", () => {
+  it("ルート内にネストしたファイルを受け入れる", () => {
     assert.doesNotThrow(() => assertPathWithinRoot("/tmp/root", "assets/app.js"));
   });
 
-  it("throws for a path that escapes the root via traversal", () => {
+  it("トラバーサルでルート外に出るパスで例外を投げる", () => {
     assert.throws(
       () => assertPathWithinRoot("/tmp/root", "../secret.txt"),
       PathValidationError,
     );
   });
 
-  it("throws for an absolute path outside the root", () => {
+  it("ルート外の絶対パスで例外を投げる", () => {
     assert.throws(
       () => assertPathWithinRoot("/tmp/root", "/etc/passwd"),
       PathValidationError,
