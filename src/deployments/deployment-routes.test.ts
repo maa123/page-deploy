@@ -24,6 +24,7 @@ function createConfig(): AppConfig {
     adminPort: 3001,
     adminSessionCookieSecure: false,
     sessionSecret: "x".repeat(32),
+    enableAdmin: true,
     maxUploadBytes: 52_428_800,
     maxFileCount: 1000,
     maxSingleFileBytes: 10_485_760,
