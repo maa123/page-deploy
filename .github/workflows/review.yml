@@ -57,6 +57,8 @@ jobs:
           github_token: ${{ steps.app-token.outputs.token }}
 
           track_progress: true
+          allowed_bots:
+            - Copilot
 
           prompt: |
             リポジトリ: ${{ github.repository }}
