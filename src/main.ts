@@ -26,7 +26,12 @@ async function main(): Promise<void> {
     }
   }
 
-  await Promise.all([startApiServer(config, db), startAdminServer(config, db)]);
+  const servers = [startApiServer(config, db)];
+  if (config.enableAdmin) {
+    servers.push(startAdminServer(config, db));
+  }
+
+  await Promise.all(servers);
 }
 
 main().catch((error: unknown) => {

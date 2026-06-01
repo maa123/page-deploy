@@ -71,6 +71,7 @@ export interface AppConfig {
   adminPort: number;
   adminSessionCookieSecure: boolean;
   sessionSecret: string;
+  enableAdmin: boolean;
   maxUploadBytes: number;
   maxFileCount: number;
   maxSingleFileBytes: number;
@@ -106,6 +107,7 @@ export function loadConfig(): AppConfig {
       process.env.ADMIN_HOST ?? "127.0.0.1",
     ),
     sessionSecret,
+    enableAdmin: parseBooleanEnv("ENABLE_ADMIN") ?? true,
     maxUploadBytes,
     maxFileCount,
     maxSingleFileBytes,
