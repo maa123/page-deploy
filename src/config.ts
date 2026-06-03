@@ -103,10 +103,10 @@ export function loadConfig(): AppConfig {
     trustProxy: loadTrustProxy(),
     host: process.env.HOST ?? "0.0.0.0",
     port: parsePositiveInt("PORT", 3000),
-    socketPath: process.env.API_SOCKET_PATH?.trim(),
+    socketPath: process.env.API_SOCKET_PATH?.trim() || undefined,
     adminHost: process.env.ADMIN_HOST ?? "127.0.0.1",
     adminPort: parsePositiveInt("ADMIN_PORT", 3001),
-    adminSocketPath: process.env.ADMIN_SOCKET_PATH?.trim(),
+    adminSocketPath: process.env.ADMIN_SOCKET_PATH?.trim() || undefined,
     adminSessionCookieSecure: resolveAdminSessionCookieSecure(
       process.env.ADMIN_HOST ?? "127.0.0.1",
     ),
