@@ -23,6 +23,37 @@ pnpm start
 pnpm dev
 ```
 
+## Docker
+
+```bash
+cp .env.example .env
+# CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID / SESSION_SECRET を設定
+```
+
+### イメージビルド
+
+```bash
+docker build -t page-deploy .
+```
+
+### 実行
+
+```bash
+docker run --rm \\
+  --env-file .env \\
+  -e ADMIN_HOST=0.0.0.0 \\
+  -p 3000:3000 \\
+  -p 3001:3001 \\
+  -v ./data:/app/data \\
+  page-deploy
+```
+
+### Docker Compose
+
+```bash
+docker compose up --build
+```
+
 起動時に `admin_users` が空の場合、管理ユーザーが 1 件作成されます。`ADMIN_PASSWORD` 未設定時は生成パスワードが stderr に一度だけ表示されます。
 
 - 公開 API: `PORT`（既定 `3000`）
