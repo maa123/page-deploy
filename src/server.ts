@@ -38,6 +38,10 @@ export async function startApiServer(
   db: DatabaseSync,
 ): Promise<ReturnType<typeof Fastify>> {
   const app = await createApiServer(config, db);
-  await app.listen({ host: config.host, port: config.port });
+  if (config.socketPath) {
+    await app.listen({ path: config.socketPath });
+  } else {
+    await app.listen({ host: config.host, port: config.port });
+  }
   return app;
 }

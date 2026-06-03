@@ -83,8 +83,10 @@ describe("設定の読み込み", () => {
     "SQLITE_PATH",
     "PORT",
     "HOST",
+    "API_SOCKET_PATH",
     "ADMIN_HOST",
     "ADMIN_PORT",
+    "ADMIN_SOCKET_PATH",
     "ADMIN_SESSION_SECURE",
     "TRUST_PROXY",
     "MAX_UPLOAD_BYTES",
@@ -168,5 +170,59 @@ describe("設定の読み込み", () => {
       config.bodyLimitBytes,
       config.maxUploadBytes + config.maxMultipartParts * config.maxMultipartFieldSize,
     );
+  });
+
+  it("API_SOCKET_PATH が設定されていれば socketPath に含まれる", () => {
+    setRequiredEnv();
+    process.env.API_SOCKET_PATH = "/tmp/api.sock";
+    const config = loadConfig();
+    assert.equal(config.socketPath, "/tmp/api.sock");
+  });
+
+  it("ADMIN_SOCKET_PATH が設定されていれば adminSocketPath に含まれる", () => {
+    setRequiredEnv();
+    process.env.ADMIN_SOCKET_PATH = "/tmp/admin.sock";
+    const config = loadConfig();
+    assert.equal(config.adminSocketPath, "/tmp/admin.sock");
+  });
+
+  it("API_SOCKET_PATH が未設定のとき socketPath は undefined", () => {
+    setRequiredEnv();
+    const config = loadConfig();
+    assert.equal(config.socketPath, undefined);
+  });
+
+  it("ADMIN_SOCKET_PATH が未設定のとき adminSocketPath は undefined", () => {
+    setRequiredEnv();
+    const config = loadConfig();
+    assert.equal(config.adminSocketPath, undefined);
+  });
+
+  it("API_SOCKET_PATH が空文字列のとき socketPath は undefined", () => {
+    setRequiredEnv();
+    process.env.API_SOCKET_PATH = "";
+    const config = loadConfig();
+    assert.equal(config.socketPath, undefined);
+  });
+
+  it("ADMIN_SOCKET_PATH が空文字列のとき adminSocketPath は undefined", () => {
+    setRequiredEnv();
+    process.env.ADMIN_SOCKET_PATH = "";
+    const config = loadConfig();
+    assert.equal(config.adminSocketPath, undefined);
+  });
+
+  it("API_SOCKET_PATH の前後の空白をトリムする", () => {
+    setRequiredEnv();
+    process.env.API_SOCKET_PATH = "  /tmp/api.sock  ";
+    const config = loadConfig();
+    assert.equal(config.socketPath, "/tmp/api.sock");
+  });
+
+  it("ADMIN_SOCKET_PATH の前後の空白をトリムする", () => {
+    setRequiredEnv();
+    process.env.ADMIN_SOCKET_PATH = "  /tmp/admin.sock  ";
+    const config = loadConfig();
+    assert.equal(config.adminSocketPath, "/tmp/admin.sock");
   });
 });
