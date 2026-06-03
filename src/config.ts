@@ -67,8 +67,10 @@ export interface AppConfig {
   trustProxy: TrustProxySetting;
   host: string;
   port: number;
+  socketPath?: string;
   adminHost: string;
   adminPort: number;
+  adminSocketPath?: string;
   adminSessionCookieSecure: boolean;
   sessionSecret: string;
   enableAdmin: boolean;
@@ -101,8 +103,10 @@ export function loadConfig(): AppConfig {
     trustProxy: loadTrustProxy(),
     host: process.env.HOST ?? "0.0.0.0",
     port: parsePositiveInt("PORT", 3000),
+    socketPath: process.env.API_SOCKET_PATH?.trim(),
     adminHost: process.env.ADMIN_HOST ?? "127.0.0.1",
     adminPort: parsePositiveInt("ADMIN_PORT", 3001),
+    adminSocketPath: process.env.ADMIN_SOCKET_PATH?.trim(),
     adminSessionCookieSecure: resolveAdminSessionCookieSecure(
       process.env.ADMIN_HOST ?? "127.0.0.1",
     ),

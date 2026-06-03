@@ -34,6 +34,10 @@ export async function startAdminServer(
   db: DatabaseSync,
 ): Promise<ReturnType<typeof Fastify>> {
   const app = await createAdminServer(config, db);
-  await app.listen({ host: config.adminHost, port: config.adminPort });
+  if (config.adminSocketPath) {
+    await app.listen({ path: config.adminSocketPath });
+  } else {
+    await app.listen({ host: config.adminHost, port: config.adminPort });
+  }
   return app;
 }
