@@ -2,6 +2,11 @@ import { loadTrustProxy, type TrustProxySetting } from "./http/trust-proxy.js";
 
 export type { TrustProxySetting };
 
+function parseOptionalString(name: string): string | undefined {
+  const trimmed = process.env[name]?.trim();
+  return trimmed && trimmed.length > 0 ? trimmed : undefined;
+}
+
 function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) {
@@ -103,10 +108,10 @@ export function loadConfig(): AppConfig {
     trustProxy: loadTrustProxy(),
     host: process.env.HOST ?? "0.0.0.0",
     port: parsePositiveInt("PORT", 3000),
-    socketPath: process.env.API_SOCKET_PATH?.trim() || undefined,
+    socketPath: parseOptionalString("API_SOCKET_PATH"),
     adminHost: process.env.ADMIN_HOST ?? "127.0.0.1",
     adminPort: parsePositiveInt("ADMIN_PORT", 3001),
-    adminSocketPath: process.env.ADMIN_SOCKET_PATH?.trim() || undefined,
+    adminSocketPath: parseOptionalString("ADMIN_SOCKET_PATH"),
     adminSessionCookieSecure: resolveAdminSessionCookieSecure(
       process.env.ADMIN_HOST ?? "127.0.0.1",
     ),
