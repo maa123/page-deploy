@@ -20,18 +20,16 @@ export interface GeneratedApiKey {
 function randomAlphanumeric(length: number): string {
   const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let result = "";
-  while (result.length < length) {
-    const bytes = randomBytes(length - result.length);
-    for (let i = 0; i < bytes.length; i++) {
-      const byte = bytes[i]!;
-      // Discard bytes >= 248 to avoid bias in modulo operation
-      // 248 = 62 * 4, so only bytes 0-247 are used for uniform distribution
-      if (byte < 248) {
-        result += alphabet[byte % alphabet.length];
-        if (result.length >= length) {
-          break;
-        }
-      }
+  // Generate more bytes than needed to account for discarded bytes (248-255)
+  // Approximately 248/256 ≈ 97% of bytes will be used
+  const bytesNeeded = Math.ceil(length * 1.04); // ~4% buffer for discarded bytes
+  const bytes = randomBytes(bytesNeeded);
+  for (let i = 0; i < bytes.length && result.length < length; i++) {
+    const byte = bytes[i]!;
+    // Discard bytes >= 248 to avoid bias in modulo operation
+    // 248 = 62 * 4, so only bytes 0-247 are used for uniform distribution
+    if (byte < 248) {
+      result += alphabet[byte % alphabet.length];
     }
   }
   return result;
