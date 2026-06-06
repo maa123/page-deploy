@@ -156,4 +156,4 @@ curl http://localhost:3000/health
 
 - デプロイは `node_modules/.bin/wrangler` のみ使用
 - Worker / Pages Functions 関連ファイルは拒否
-- multipart でファイルを直接送信（ZIP 非対応）
+- multipart でファイルを直接送信
