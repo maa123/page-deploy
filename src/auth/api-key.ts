@@ -5,6 +5,10 @@ import argon2 from "argon2";
 const API_KEY_PREFIX = "dep_live_";
 const KEY_ID_PATTERN = /^[a-zA-Z0-9]{8,32}$/;
 const SECRET_PATTERN = /^[a-zA-Z0-9_-]{16,64}$/;
+// Ratio of bytes needed to valid bytes: 256/248 ≈ 1.032258
+// (since 8 out of 256 bytes are discarded to avoid bias in modulo)
+const RANDOM_BUFFER_RATIO = 256 / 248;
+const RANDOM_ALPHABET = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 export interface ParsedApiKey {
   keyId: string;
@@ -18,12 +22,23 @@ export interface GeneratedApiKey {
 }
 
 function randomAlphanumeric(length: number): string {
-  const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  const bytes = randomBytes(length);
   let result = "";
-  for (let i = 0; i < length; i++) {
-    result += alphabet[bytes[i]! % alphabet.length];
+  
+  while (result.length < length) {
+    const remaining = length - result.length;
+    const bytesNeeded = Math.ceil(remaining * RANDOM_BUFFER_RATIO);
+    const bytes = randomBytes(bytesNeeded);
+    
+    for (let i = 0; i < bytes.length && result.length < length; i++) {
+      const byte = bytes[i]!;
+      // Discard bytes >= 248 to avoid bias in modulo operation
+      // 248 = 62 * 4, so only bytes 0-247 are used for uniform distribution
+      if (byte < 248) {
+        result += RANDOM_ALPHABET[byte % RANDOM_ALPHABET.length];
+      }
+    }
   }
+  
   return result;
 }
 
