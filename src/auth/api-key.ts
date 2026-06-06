@@ -19,13 +19,13 @@ export interface GeneratedApiKey {
 
 function randomAlphanumeric(length: number): string {
   const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  // Ratio of bytes needed to valid bytes: 256/248 ≈ 1.032258 (since 8 out of 256 bytes are discarded)
+  const bufferRatio = 256 / 248;
   let result = "";
   
   while (result.length < length) {
-    // Generate more bytes than needed to account for discarded bytes (248-255)
-    // Exactly 248/256 ≈ 96.875% of bytes will be used (8 out of 256 bytes are discarded)
     const remaining = length - result.length;
-    const bytesNeeded = Math.ceil(remaining * (256 / 248)); // Optimal buffer size
+    const bytesNeeded = Math.ceil(remaining * bufferRatio);
     const bytes = randomBytes(bytesNeeded);
     
     for (let i = 0; i < bytes.length && result.length < length; i++) {
