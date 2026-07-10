@@ -1,4 +1,4 @@
-FROM node:24-bookworm@sha256:8530f76a96d88820d288761f022e318970dda93d01536919fbc16076b7983e63 AS build
+FROM node:25-bookworm@sha256:78839ac448c23517f8eab2e8f7943d9b4f73979eb7f8bed2c73dbf72ff869e7b AS build
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends python3 make g++ \
@@ -16,7 +16,7 @@ COPY src ./src
 RUN pnpm run build
 RUN pnpm prune --prod
 
-FROM node:24-bookworm-slim@sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf AS runtime
+FROM node:25-bookworm-slim@sha256:81db02c4b671288a03915da9534dbd54f96d0e7c24d80ccc54f5b36b2e684370 AS runtime
 
 ENV NODE_ENV=production
 
