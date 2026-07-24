@@ -21,7 +21,7 @@
     "@fastify/session": "^11.0.0",
     "argon2": "^0.44.0",
     "fastify": "^5.0.0",
-    "wrangler": "4.110.0",
+    "wrangler": "4.112.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
