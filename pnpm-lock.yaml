@@ -15,8 +15,8 @@ importers:
         specifier: ^10.1.0
         version: 10.1.0
       '@fastify/session':
-        specifier: ^11.0.0
-        version: 11.1.1
+        specifier: ^11.1.2
+        version: 11.1.2
       argon2:
         specifier: ^0.44.0
         version: 0.44.0
@@ -281,8 +281,8 @@ packages:
   '@fastify/proxy-addr@5.1.0':
     resolution: {integrity: sha512-INS+6gh91cLUjB+PVHfu1UqcB76Sqtpyp7bnL+FYojhjygvOPA9ctiD/JDKsyD9Xgu4hUhCSJBPig/w7duNajw==}
 
-  '@fastify/session@11.1.1':
-    resolution: {integrity: sha512-nuKwTHxh3eJsI4NJeXoYVGzXUsg+kH1WfHgS7IofVyVhmjc+A6qGr+29WQy8hYZiNtmCjfG415COpf5xTBkW4Q==}
+  '@fastify/session@11.1.2':
+    resolution: {integrity: sha512-Hh2MjeVSQIqHumfigTtVPbyUUscPWlkUM3Xf7nII9bS82HYdCl3phMXF1pEHwNlQZRpKD4MWa3/t0TjGrJT6sw==}
 
   '@img/colour@1.1.0':
     resolution: {integrity: sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ==}
@@ -925,9 +925,9 @@ snapshots:
       '@fastify/forwarded': 3.0.1
       ipaddr.js: 2.4.0
 
-  '@fastify/session@11.1.1':
+  '@fastify/session@11.1.2':
     dependencies:
-      fastify-plugin: 5.1.0
+      fastify-plugin: 6.0.0
       safe-stable-stringify: 2.5.0
 
   '@img/colour@1.1.0': {}
