@@ -1,3 +1,4 @@
+import type { Server as HttpServer } from "node:http";
 import type { DatabaseSync } from "node:sqlite";
 import Fastify, { type FastifyInstance } from "fastify";
 import cookie from "@fastify/cookie";
@@ -11,7 +12,7 @@ export async function createAdminServer(
   config: AppConfig,
   db: DatabaseSync,
 ): Promise<FastifyInstance> {
-  const app = Fastify({ logger: { level: "info" } }) as unknown as FastifyInstance;
+  const app = Fastify<HttpServer>({ logger: { level: "info" } });
 
   await app.register(cookie);
   await app.register(session, {

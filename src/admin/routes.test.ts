@@ -51,9 +51,9 @@ describe("admin routes", () => {
       secret: config.sessionSecret,
       cookie: { httpOnly: true, sameSite: "lax", secure: false },
     });
-    await registerAdminRoutes(app as unknown as FastifyInstance, db, config);
-    apps.push(app as unknown as FastifyInstance);
-    return app as unknown as FastifyInstance;
+    await registerAdminRoutes(app, db, config);
+    apps.push(app);
+    return app;
   }
 
   it("login, create project, issue api key", async () => {

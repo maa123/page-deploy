@@ -82,10 +82,10 @@ describe("registerDeploymentRoutes Bearer auth", () => {
       },
       throwFileSizeLimit: true,
     });
-    await registerDeploymentRoutes(app as unknown as FastifyInstance, { config, db });
-    apps.push(app as unknown as FastifyInstance);
+    await registerDeploymentRoutes(app, { config, db });
+    apps.push(app);
     return {
-      app: app as unknown as FastifyInstance,
+      app,
       projectId,
       bearer: `Bearer dep_live_${keyId}_${secret}`,
     };
