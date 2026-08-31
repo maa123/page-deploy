@@ -6,7 +6,7 @@ import type { AppConfig } from "./config.js";
 import { registerDeploymentRoutes } from "./deployments/deployment-routes.js";
 import type { TrustProxySetting } from "./http/trust-proxy.js";
 
-type FastifyTrustProxyOption = Exclude<TrustProxySetting, number> | ((address: string, hop: number) => boolean);
+type FastifyTrustProxyOption = TrustProxySetting;
 
 export async function createApiServer(
   config: AppConfig,
@@ -15,7 +15,9 @@ export async function createApiServer(
   const app = Fastify({
     logger: true,
     bodyLimit: config.bodyLimitBytes,
-    trustProxy: config.trustProxy as FastifyTrustProxyOption,
+    // Fastify supports a numeric hop count at runtime, but its current type def excludes it.
+    // @ts-expect-error trustProxy is a valid TrustProxySetting even when it is a hop count.
+    trustProxy: config.trustProxy,
   });
 
   await app.register(multipart, {
@@ -31,9 +33,9 @@ export async function createApiServer(
 
   app.get("/health", async () => ({ ok: true }));
 
-  await registerDeploymentRoutes(app, { config, db });
+  await registerDeploymentRoutes(app as unknown as FastifyInstance, { config, db });
 
-  return app;
+  return app as unknown as FastifyInstance;
 }
 
 export async function startApiServer(
