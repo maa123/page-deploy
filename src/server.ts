@@ -12,12 +12,11 @@ export async function createApiServer(
   config: AppConfig,
   db: DatabaseSync,
 ): Promise<FastifyInstance> {
+  const trustProxy: FastifyTrustProxyOption = config.trustProxy;
   const app = Fastify({
     logger: true,
     bodyLimit: config.bodyLimitBytes,
-    // Fastify supports a numeric hop count at runtime, but its current type def excludes it.
-    // @ts-expect-error trustProxy is a valid TrustProxySetting even when it is a hop count.
-    trustProxy: config.trustProxy,
+    trustProxy: trustProxy as unknown as boolean | string | string[] | ((address: string, hop: number) => boolean),
   });
 
   await app.register(multipart, {
