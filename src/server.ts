@@ -12,6 +12,9 @@ export async function createApiServer(
   const app = Fastify({
     logger: true,
     bodyLimit: config.bodyLimitBytes,
+    // Fastify accepts numeric hop counts at runtime even though the published
+    // types currently omit the number form.
+    // @ts-expect-error numeric trustProxy hops are supported by Fastify at runtime.
     trustProxy: config.trustProxy,
   });
 

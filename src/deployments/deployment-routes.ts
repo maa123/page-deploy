@@ -52,7 +52,7 @@ export interface DeploymentRouteDeps {
 }
 
 export async function registerDeploymentRoutes(
-  app: FastifyInstance,
+  app: FastifyInstance<any, any, any, any, any>,
   deps: DeploymentRouteDeps,
 ): Promise<void> {
   const { config, db } = deps;
