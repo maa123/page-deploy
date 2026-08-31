@@ -1,5 +1,10 @@
 /** Fastify の trustProxy オプション（プロキシ背後で request.ip を正しく得る） */
-export type TrustProxySetting = boolean | number | string | string[];
+export type TrustProxySetting =
+  | boolean
+  | number
+  | string
+  | string[]
+  | ((address: string, hop: number) => boolean);
 
 /**
  * TRUST_PROXY 環境変数:

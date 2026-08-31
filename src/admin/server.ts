@@ -1,5 +1,6 @@
+import type { Server as HttpServer } from "node:http";
 import type { DatabaseSync } from "node:sqlite";
-import Fastify from "fastify";
+import Fastify, { type FastifyInstance } from "fastify";
 import cookie from "@fastify/cookie";
 import session from "@fastify/session";
 
@@ -10,8 +11,8 @@ import { registerAdminRoutes } from "./routes.js";
 export async function createAdminServer(
   config: AppConfig,
   db: DatabaseSync,
-): Promise<ReturnType<typeof Fastify>> {
-  const app = Fastify({ logger: { level: "info" } });
+): Promise<FastifyInstance> {
+  const app = Fastify<HttpServer>({ logger: { level: "info" } });
 
   await app.register(cookie);
   await app.register(session, {
@@ -32,7 +33,7 @@ export async function createAdminServer(
 export async function startAdminServer(
   config: AppConfig,
   db: DatabaseSync,
-): Promise<ReturnType<typeof Fastify>> {
+): Promise<FastifyInstance> {
   const app = await createAdminServer(config, db);
   if (config.adminSocketPath) {
     await app.listen({ path: config.adminSocketPath });

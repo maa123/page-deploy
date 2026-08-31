@@ -1,18 +1,23 @@
+import type { Server as HttpServer } from "node:http";
 import type { DatabaseSync } from "node:sqlite";
-import Fastify from "fastify";
+import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import multipart from "@fastify/multipart";
 
 import type { AppConfig } from "./config.js";
 import { registerDeploymentRoutes } from "./deployments/deployment-routes.js";
 
+type FastifyTrustProxyOption = FastifyServerOptions["trustProxy"];
+
 export async function createApiServer(
   config: AppConfig,
   db: DatabaseSync,
-): Promise<ReturnType<typeof Fastify>> {
-  const app = Fastify({
+): Promise<FastifyInstance> {
+  // Fastify's published trustProxy type omits numeric hop counts, but runtime supports them.
+  const trustProxy: FastifyTrustProxyOption = config.trustProxy as FastifyTrustProxyOption;
+  const app = Fastify<HttpServer>({
     logger: true,
     bodyLimit: config.bodyLimitBytes,
-    trustProxy: config.trustProxy,
+    trustProxy,
   });
 
   await app.register(multipart, {
@@ -36,7 +41,7 @@ export async function createApiServer(
 export async function startApiServer(
   config: AppConfig,
   db: DatabaseSync,
-): Promise<ReturnType<typeof Fastify>> {
+): Promise<FastifyInstance> {
   const app = await createApiServer(config, db);
   if (config.socketPath) {
     await app.listen({ path: config.socketPath });

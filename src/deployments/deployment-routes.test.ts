@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { afterEach, describe, it } from "node:test";
-import Fastify from "fastify";
+import Fastify, { type FastifyInstance } from "fastify";
 import multipart from "@fastify/multipart";
 
 import { hashSecret } from "../auth/api-key.js";
@@ -36,14 +36,14 @@ function createConfig(): AppConfig {
 }
 
 describe("registerDeploymentRoutes Bearer auth", () => {
-  const apps: Array<ReturnType<typeof Fastify>> = [];
+  const apps: Array<FastifyInstance> = [];
 
   afterEach(async () => {
     await Promise.all(apps.splice(0).map((app) => app.close()));
   });
 
   async function buildAppWithKey(): Promise<{
-    app: ReturnType<typeof Fastify>;
+    app: FastifyInstance;
     projectId: string;
     bearer: string;
   }> {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
-import Fastify from "fastify";
+import Fastify, { type FastifyInstance } from "fastify";
 import cookie from "@fastify/cookie";
 import session from "@fastify/session";
 import { z } from "zod";
@@ -34,13 +34,13 @@ function createConfig(): AppConfig {
 }
 
 describe("admin routes", () => {
-  const apps: Array<ReturnType<typeof Fastify>> = [];
+  const apps: Array<FastifyInstance> = [];
 
   afterEach(async () => {
     await Promise.all(apps.splice(0).map((app) => app.close()));
   });
 
-  async function buildApp(): Promise<ReturnType<typeof Fastify>> {
+  async function buildApp(): Promise<FastifyInstance> {
     const db = openMemoryDatabase();
     const config = createConfig();
     await bootstrapAdminUser(db, { username: "admin", password: "admin-password-12345" });
