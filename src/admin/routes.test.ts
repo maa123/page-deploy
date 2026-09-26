@@ -80,10 +80,11 @@ describe("admin routes", () => {
     assert.ok(newCookieHeader);
     assert.notEqual(String(cookieHeader), String(newCookieHeader));
 
+    const sessionCookie = String(newCookieHeader);
     const createProject = await app.inject({
       method: "POST",
       url: "/admin/projects",
-      headers: { cookie: String(cookieHeader) },
+      headers: { cookie: sessionCookie },
       payload: {
         slug: "my-site",
         cfAccountId: "cf-account",
@@ -97,7 +98,7 @@ describe("admin routes", () => {
     const createKey = await app.inject({
       method: "POST",
       url: `/admin/projects/${projectId}/api-keys`,
-      headers: { cookie: String(cookieHeader) },
+      headers: { cookie: sessionCookie },
       payload: { name: "ci-key" },
     });
     assert.equal(createKey.statusCode, 201);
