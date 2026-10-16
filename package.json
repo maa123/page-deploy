@@ -16,7 +16,7 @@
     "wrangler:version": "wrangler --version"
   },
   "dependencies": {
-    "@fastify/cookie": "^11.1.2",
+    "@fastify/cookie": "^11.1.3",
     "@fastify/multipart": "^10.1.2",
     "@fastify/session": "^11.1.4",
     "argon2": "^0.45.1",
