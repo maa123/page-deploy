@@ -22,7 +22,7 @@
     "argon2": "^0.45.1",
     "fastify": "^5.12.7",
     "wrangler": "4.151.0",
-    "zod": "^4.6.5"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@types/node": "^25.9.3",
