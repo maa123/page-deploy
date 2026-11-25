@@ -15,8 +15,8 @@ importers:
         specifier: ^10.1.6
         version: 10.1.6
       '@fastify/session':
-        specifier: ^11.1.4
-        version: 11.1.4
+        specifier: ^11.1.6
+        version: 11.1.6
       argon2:
         specifier: ^0.45.1
         version: 0.45.1
@@ -281,8 +281,8 @@ packages:
   '@fastify/proxy-addr@5.1.2':
     resolution: {integrity: sha512-uqB4QsgVoro0XDC+DIftIMGXHdBPn+lK6Ek3xXAIxPMCJfqxnbtyEoMCm2KPUVOuIosd7Cyw9HawEqMFM/UA+g==}
 
-  '@fastify/session@11.1.4':
-    resolution: {integrity: sha512-gFxGlo7+wJO86Wje1aKZnRNNMgLgVHeLuExLzSiyLshEMMA3TGB/FS0V8Ek7GGt5PWjB4AoMjAasw0G8SB6CUA==}
+  '@fastify/session@11.1.6':
+    resolution: {integrity: sha512-ggv3aRRQGPwPGLurZnKQiJu4cRa5Mnnf41gFeK9lo1tvaMFwqO70Nhx2tS/lREMdLZbwxBW2tRxVUaz0qMEguA==}
 
   '@img/colour@1.1.0':
     resolution: {integrity: sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ==}
@@ -619,6 +619,7 @@ packages:
   argon2@0.45.1:
     resolution: {integrity: sha512-skm+/WCjkGqCQxF7FG1LuZXM5yvbFjgbfiCGsud2oLgaDhh6b6dbH0b1EkghbM+xx4Bj8Ape+KKgixoIlWZicQ==}
     engines: {node: '>=16.17.0'}
+    deprecated: This version has a bug in hash encoding and generates invalid hashes, please update to v0.45.2 or later
 
   atomic-sleep@1.0.0:
     resolution: {integrity: sha512-kNOjDqAh7px0XWNI+4QbzoiR/nTkHAWNud2uvnJquD1/x5a7EQZMJT0AczqK0Qn67oY/TTQ1LbUKajZpp3I9tQ==}
@@ -1055,9 +1056,9 @@ snapshots:
       '@fastify/forwarded': 3.1.1
       ipaddr.js: 2.5.0
 
-  '@fastify/session@11.1.4':
+  '@fastify/session@11.1.6':
     dependencies:
-      fastify-plugin: 6.0.0
+      fastify-plugin: 6.0.1
       safe-stable-stringify: 2.5.0
 
   '@img/colour@1.1.0': {}
